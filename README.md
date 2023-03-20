@@ -35,7 +35,7 @@ Sie benötigt keine weiteren Module.
 
 Start:
 
-Windows:
+Windows: (Getestet mit Python 3.10.3)
 
 ```bat
 cd RVEZeitmessung
@@ -43,7 +43,7 @@ py main.py
 
 ```
 
-Linux:
+Linux: (Getested mit Python 3.7.3 auf Linux armv7l)
 
 ```bash
 cd RVEZeitmessung

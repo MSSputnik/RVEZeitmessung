@@ -11,7 +11,7 @@ import tkinter as tk
 import configparser
 
 
-AppVersion = "20230320-1954"
+AppVersion = "20230320-2037"
 
 
 class Config:
@@ -34,7 +34,7 @@ class Config:
             },
             "AutoIncrement" : {
                 "ini" : "DEFAULT.AutoIncrement",
-                "default" : True,
+                "default" : False,
                 "type" : "boolean"
             }
         },
@@ -75,11 +75,6 @@ class Config:
         self.__configData["data"]["TRZFile"] = f'{self.__configData["data"]["Position"]}.trz'
         self.__configData["data"]["SQLiteFile"] = f'{self.__configData["data"]["Position"]}.db'
 
-        #print("Configuration")
-        #print(json.dumps(self.__configData, indent=2))
-        #print("--------------------------")
-        #print(f'Result: {self.updateConfig("data", "AutoIncrement", False)}')
-        #exit(0)
         # -- GUI Elemente
         self.__uiDesign["title"] = self.get("app.title").format(AppVersion=AppVersion)
         self.__uiDesign["geometry"] = "800x600"
@@ -496,6 +491,34 @@ class Config:
             }
         })
         self.__uiDesign["uiElements"].append({
+            "name" : "radioAutoincrement",
+            "type" : "radiobutton",
+            "description" : "radio button Autoincrement",
+            "properties" : {
+                "text" : "Automatic Increment",
+                "value" : 1
+            },
+            "placement" : {
+                "x" : 10,
+                "y" : 355,
+                "width" : 150
+            }
+        })
+        self.__uiDesign["uiElements"].append({
+            "name" : "radioAutoclear",
+            "type" : "radiobutton",
+            "description" : "radio button Autoclear",
+            "properties" : {
+                "text" : "Automatic Clear",
+                "value" : 0
+            },
+            "placement" : {
+                "x" : 10,
+                "y" : 375,
+                "width" : 150
+            }
+        })
+        self.__uiDesign["uiElements"].append({
             "name" : "frmLogo",
             "type" : "frame",
             "description" : "Frame for logo",
@@ -574,7 +597,6 @@ class Config:
 
             for section in self.__configVariables:
                 for parameter in self.__configVariables[section]:
-                    #print(f"Processing {section}.{parameter} : {self.__configVariables[section][parameter]}")
                     iniPath = None
                     value = None
                     if "ini" in self.__configVariables[section][parameter]:
@@ -588,7 +610,6 @@ class Config:
                     if iniPath:
                         iniArray = iniPath.split(".")
                         if len(iniArray) == 2:
-                            #print(f"Read: {iniArray[0]} - {iniArray[1]}, Default: {defaultValue}, Type: {valueType}")
                             if valueType == "boolean":
                                 value = config.getboolean(iniArray[0], iniArray[1], fallback=defaultValue)
                             if valueType == "string":
@@ -619,7 +640,6 @@ class Config:
         They are translated by this function to the actual values for the .ini file.
         """
         result = False
-        print(f"updateConfig({section}, {parameter}, {value})")
         if section and parameter:
             if section in self.__configVariables:
                 if parameter in self.__configVariables[section]:
@@ -631,8 +651,19 @@ class Config:
                                 valueType = self.__configVariables[section][parameter]["type"]
                             iniArray = iniPath.split(".")
                             if len(iniArray) == 2:
-                                print(f"Write: {iniArray[0]} - {iniArray[1]}, Type: {valueType}, Value: {value}")
                                 # After validating everything, now do the actual update.
+                                if section in self.__configData:
+                                    try:
+                                        if valueType == "boolean":
+                                            value = bool(value)
+                                        if valueType == "float":
+                                            value = float(value)
+                                        if valueType == "int":
+                                            value = int(value)
+                                    except:
+                                        pass
+                                    self.__configData[section][parameter] = value
+                                # Update .ini file
                                 config = configparser.ConfigParser()
                                 config.read(self.__configFileName)
                                 config.set(iniArray[0], iniArray[1], str(value))

@@ -83,7 +83,8 @@ class UI:
           self.__addScrollbar(parent, elementName, properties, placement, pack)
         if "listbox" == element["type"].lower():
           self.__addListbox(parent, elementName, properties, placement, pack)
-
+        if "radiobutton" == element["type"].lower():
+          self.__addRadioButton(parent, elementName, properties, placement, pack)
 
         if "uiElements" in element:
           for subElement in element["uiElements"]:
@@ -129,6 +130,17 @@ class UI:
     """
     #print(f"Add new button {name}")
     self.__UIElements[name] = ttk.Button(parent, **properties)
+    if placement:
+      self.__UIElements[name].place(cnf=placement)
+    if pack:
+      self.__UIElements[name].pack(cnf=pack)
+
+  def __addRadioButton(self, parent, name: str, properties: dict={}, placement: dict={}, pack: dict={}):
+    """
+    add an radio button
+    """
+    #print(f"Add new button {name}")
+    self.__UIElements[name] = ttk.Radiobutton(parent, **properties)
     if placement:
       self.__UIElements[name].place(cnf=placement)
     if pack:

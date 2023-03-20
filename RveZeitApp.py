@@ -63,7 +63,8 @@ class App:
             scrollbar.config(command = listbox.yview )
 
         # activate buttons etc
-        ui.insert("window.text1", 0, str(maxNumber+1))
+        if self.__config.get("data.AutoIncrement"):
+            ui.insert("window.text1", 0, str(maxNumber+1))
         ui.config("window.btnCheck1", command=self.check_1)
         ui.config("window.btnCommit1", command=self.zeitOf1)
         ui.config("window.btnCheck2", command=self.check_2)
@@ -95,6 +96,17 @@ class App:
         # fill list with data
         self.refeshList()
 
+        # activate radiobuttons
+        self.__autoValue = tk.IntVar()
+        ui.config("window.radioAutoincrement", variable=self.__autoValue, command=self.__updateAuto)
+        ui.config("window.radioAutoclear", variable=self.__autoValue, command=self.__updateAuto)
+        autoIncrement = self.__config.get("data.AutoIncrement")
+        if autoIncrement:
+            self.__autoValue.set(1)
+        else:
+            self.__autoValue.set(0)
+
+
     def start(self):
         self.__clocktime()
 
@@ -108,6 +120,14 @@ class App:
         self.__ui.config("window.lblClock", text=string)
         self.__ui.after("window.lblClock", 500, self.__clocktime)
 
+    #========================================================================
+    def __updateAuto(self):
+        """
+        Update the auto increment / clear functionallity and the configuration
+        """
+        newValue = self.__autoValue.get()
+        self.__config.updateConfig("data", "AutoIncrement", newValue==1)
+    
     #========================================================================
     def check_1(self):
         self.__checkNumber(1)
@@ -151,12 +171,18 @@ class App:
         if(len(nostr)>0):
             self.__db.upsertDataByNumber(nostr, timeString, jetzt.tm_hour, jetzt.tm_min, jetzt.tm_sec, secToday)
 
-            self.__ui.replace(f"window.text{nummer}", str(int(nostr)+1))
+            if self.__config.get("data.AutoIncrement"):
+                self.__ui.replace(f"window.text{nummer}", str(int(nostr)+1))
+            else:
+                self.__ui.clear(f"window.text{nummer}")
+
             self.__ui.config(f"window.btnCommit{nummer}", style=self.__styles["defaultButton"] )
             self.__ui.config(f"window.text{nummer}", style=self.__styles["defaultEntry"] )
             self.refeshList()
         else:
-            self.__ui.replace(f"window.text{nummer}", "0")
+            if self.__config.get("data.AutoIncrement"):
+                self.__ui.replace(f"window.text{nummer}", "0")
+
             self.__ui.config(f"window.btnCommit{nummer}", style=self.__styles["redButton"] )
             self.__ui.config(f"window.text{nummer}", style=self.__styles["redEntry"] )
 

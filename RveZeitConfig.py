@@ -11,7 +11,7 @@ import tkinter as tk
 import configparser
 
 
-AppVersion = "20230320-1823"
+AppVersion = "20230320-1954"
 
 
 class Config:
@@ -25,17 +25,40 @@ class Config:
     __uiDesign={}
     __configFileName = "RVEZeit.ini"
     __defaultPosition = "Test"
+    
+    __configVariables = {
+        "data" : {
+            "Position" : {
+                "ini" : "DEFAULT.Position",
+                "default" : __defaultPosition
+            },
+            "AutoIncrement" : {
+                "ini" : "DEFAULT.AutoIncrement",
+                "default" : True,
+                "type" : "boolean"
+            }
+        },
+        "ftp" : {
+            "FTPserver" : {
+                "ini" : "FTP.Server"
+            },
+            "FTPuser" : {
+                "ini" : "FTP.User"
+            },
+            "FTPpasswd" : {
+                "ini" : "FTP.Password"
+            },
+            "FTPdir" : {
+                "ini" : "FTP.Directory"
+            }
+        }
+    }
+
 
     def __init__(self):
         """
         Load configuration from various sources
         """
-        config = configparser.ConfigParser()
-        try:
-            config.read(self.__configFileName)
-        except:
-            print(f"ERROR: Configuration '{self.__configFileName}' nicht gefunden")
-            exit(1)
 
         # -- Applikationskonfiguration
         self.__configData = {}
@@ -44,17 +67,19 @@ class Config:
         self.__configData["app"]["title"] = f"python TriaZeit mit Datenbank - {AppVersion}"
         self.__configData["app"]["logo"] = "RVE-Logo.gif"
         self.__configData["data"] = {}
-        position = config.get("DEFAULT", 'Position', fallback=self.__defaultPosition)
-        self.__configData["data"]["Position"] = position
-        self.__configData["data"]["TRZFile"] = f"{position}.trz"
-        self.__configData["data"]["SQLiteFile"] = f"{position}.db"
-        self.__configData["ftp"] = {}
-        if 'FTP' in config:
-            self.__configData["ftp"]["FTPserver"] = config.get('FTP', 'Server')
-            self.__configData["ftp"]["FTPuser"] = config.get('FTP', 'User')
-            self.__configData["ftp"]["FTPpasswd"] = config.get('FTP', 'Password')
-            self.__configData["ftp"]["FTPdir"] = config.get('FTP', 'Directory')
+        self.__configData["data"]["Position"] = self.__defaultPosition
+        # Load configuration from .ini file
+        self.__loadConfigFromINI()
 
+        # set parameter which are only nown after loading from .ini file
+        self.__configData["data"]["TRZFile"] = f'{self.__configData["data"]["Position"]}.trz'
+        self.__configData["data"]["SQLiteFile"] = f'{self.__configData["data"]["Position"]}.db'
+
+        #print("Configuration")
+        #print(json.dumps(self.__configData, indent=2))
+        #print("--------------------------")
+        #print(f'Result: {self.updateConfig("data", "AutoIncrement", False)}')
+        #exit(0)
         # -- GUI Elemente
         self.__uiDesign["title"] = self.get("app.title").format(AppVersion=AppVersion)
         self.__uiDesign["geometry"] = "800x600"
@@ -537,3 +562,95 @@ class Config:
                     uiData = None
 
         return uiData
+    
+    def __loadConfigFromINI(self):
+        """
+        Load configigruation from .ini file into runtime configuration.
+        Uses __configVariables to map internal to .ini variables.
+        """
+        config = configparser.ConfigParser()
+        try:
+            config.read(self.__configFileName)
+
+            for section in self.__configVariables:
+                for parameter in self.__configVariables[section]:
+                    #print(f"Processing {section}.{parameter} : {self.__configVariables[section][parameter]}")
+                    iniPath = None
+                    value = None
+                    if "ini" in self.__configVariables[section][parameter]:
+                        iniPath = self.__configVariables[section][parameter]["ini"]
+                    defaultValue = None
+                    if "default" in self.__configVariables[section][parameter]:
+                        defaultValue = self.__configVariables[section][parameter]["default"]
+                    valueType = "string"
+                    if "type" in self.__configVariables[section][parameter]:
+                        valueType = self.__configVariables[section][parameter]["type"]
+                    if iniPath:
+                        iniArray = iniPath.split(".")
+                        if len(iniArray) == 2:
+                            #print(f"Read: {iniArray[0]} - {iniArray[1]}, Default: {defaultValue}, Type: {valueType}")
+                            if valueType == "boolean":
+                                value = config.getboolean(iniArray[0], iniArray[1], fallback=defaultValue)
+                            if valueType == "string":
+                                value = config.get(iniArray[0], iniArray[1], fallback=defaultValue)
+                            if valueType == "int":
+                                value = config.getint(iniArray[0], iniArray[1], fallback=defaultValue)
+                            if valueType == "float":
+                                value = config.getfloat(iniArray[0], iniArray[1], fallback=defaultValue)
+                            if not section in self.__configData:
+                                self.__configData[section] = {}
+                            self.__configData[section][parameter] = value
+
+                        else:
+                            print(f"ERROR: configVariables definition error. ini path for {section}.{parameter} is invalid.")
+                    else:
+                        print(f"ERROR: configVariables definition error. ini path for {section}.{parameter} is missing.")
+                    
+
+        except Exception as e:
+            print(f"ERROR: Laden der Konfiguration '{self.__configFileName}' fehlgeschlagen: {e}")
+            exit(1)
+            
+    
+    def updateConfig(self, section, parameter, value) -> bool:
+        """
+        Write the given value to the configuration .ini file.
+        section and parameter are the internal values.
+        They are translated by this function to the actual values for the .ini file.
+        """
+        result = False
+        print(f"updateConfig({section}, {parameter}, {value})")
+        if section and parameter:
+            if section in self.__configVariables:
+                if parameter in self.__configVariables[section]:
+                    if "ini" in self.__configVariables[section][parameter]:
+                        iniPath = self.__configVariables[section][parameter]["ini"]
+                        if iniPath:
+                            valueType = "string"
+                            if "type" in self.__configVariables[section][parameter]:
+                                valueType = self.__configVariables[section][parameter]["type"]
+                            iniArray = iniPath.split(".")
+                            if len(iniArray) == 2:
+                                print(f"Write: {iniArray[0]} - {iniArray[1]}, Type: {valueType}, Value: {value}")
+                                # After validating everything, now do the actual update.
+                                config = configparser.ConfigParser()
+                                config.read(self.__configFileName)
+                                config.set(iniArray[0], iniArray[1], str(value))
+                                with open(self.__configFileName, "w") as fp:
+                                    config.write(fp, self.__configFileName)
+                                    fp.close()
+                            else:
+                                print(f"ERROR: configVariables definition error. ini path for {section}.{parameter} is invalid.")
+                        else:
+                            print(f"ERROR: configVariables definition error. ini path for {section}.{parameter} is empty.")
+                    else:
+                        print(f"ERROR: configVariables definition error. ini path for {section}.{parameter} is missing.")
+                else:
+                    print(f"ERROR: updateConfig unknown parameter {parameter} in {section}.")
+            else:
+                print(f"ERROR: updateConfig unknown section {section}.")
+        else:
+            print(f"ERROR: updateConfig given section or parameter is empty.")
+        return result
+
+

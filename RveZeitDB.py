@@ -19,9 +19,9 @@ class DB:
     __dbCursor = None
 
     def __init__(self, config: RveZeitConfig):
-        print(f"Initialize Database")
         # Existenz feststellen
         sqliteFile = config.get("data.SQLiteFile")
+        print(f"Initialize Database {sqliteFile}")
         if sqliteFile:
             if os.path.exists( sqliteFile ):
                 # Verbindung zur Datenbank erzeugen

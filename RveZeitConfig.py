@@ -11,7 +11,7 @@ import tkinter as tk
 import configparser
 
 
-AppVersion = "20230320-1657"
+AppVersion = "20230320-1823"
 
 
 class Config:
@@ -36,7 +36,8 @@ class Config:
         except:
             print(f"ERROR: Configuration '{self.__configFileName}' nicht gefunden")
             exit(1)
-        
+
+        # -- Applikationskonfiguration
         self.__configData = {}
         self.__configData["app"] = {}
         self.__configData["app"]["version"] = AppVersion
@@ -53,8 +54,8 @@ class Config:
             self.__configData["ftp"]["FTPuser"] = config.get('FTP', 'User')
             self.__configData["ftp"]["FTPpasswd"] = config.get('FTP', 'Password')
             self.__configData["ftp"]["FTPdir"] = config.get('FTP', 'Directory')
-        print(f"FTP: {self.__configData['ftp']}")
 
+        # -- GUI Elemente
         self.__uiDesign["title"] = self.get("app.title").format(AppVersion=AppVersion)
         self.__uiDesign["geometry"] = "800x600"
         self.__uiDesign["resizable"] = {

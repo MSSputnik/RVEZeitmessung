@@ -40,8 +40,8 @@ class App:
         # Create Styles
         green = '#109410'
         red = '#ba1c1c'
-        ttk.Style().configure('green.TButton', background=green, foreground=green)
-        ttk.Style().configure('red.TButton', background=red, foreground=red)
+        ttk.Style().configure('green.TButton', foreground=green)
+        ttk.Style().configure('red.TButton', foreground=red)
         ttk.Style().configure('green.TEntry', foreground=green)
         ttk.Style().configure('red.TEntry', foreground=red)
 

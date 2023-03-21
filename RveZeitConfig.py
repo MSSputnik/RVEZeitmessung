@@ -62,7 +62,6 @@ class Config:
         self.__configData = {}
         self.__configData["app"] = {}
         self.__configData["app"]["version"] = AppVersion
-        self.__configData["app"]["title"] = f"python TriaZeit mit Datenbank - {AppVersion}"
         self.__configData["app"]["logo"] = "RVE-Logo.gif"
         self.__configData["data"] = {}
         self.__configData["data"]["Position"] = self.__defaultPosition
@@ -73,8 +72,12 @@ class Config:
         self.__configData["data"]["TRZFile"] = f'{self.__configData["data"]["Position"]}.trz'
         self.__configData["data"]["SQLiteFile"] = f'{self.__configData["data"]["Position"]}.db'
 
+        # set title wenn position ist bekannt
+        self.__configData["app"]["title"] = f"python TriaZeit mit Datenbank - {AppVersion} - " \
+            + f"{self.__configData['data']['Position']}"
+
         # -- GUI Elemente
-        self.__uiDesign["title"] = self.get("app.title").format(AppVersion=AppVersion)
+        self.__uiDesign["title"] = self.get("app.title")
         self.__uiDesign["geometry"] = "800x600"
         self.__uiDesign["resizable"] = {
             "width": False,

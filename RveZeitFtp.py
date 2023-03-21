@@ -9,6 +9,7 @@ import ftplib
 
 import RveZeitConfig
 
+
 class FTP:
     """
     Class to handle ftp calls
@@ -16,33 +17,32 @@ class FTP:
 
     __config = None
 
-    def __init__(self, config:RveZeitConfig):
+    def __init__(self, config: RveZeitConfig):
         self.__config = config
 
-
-    def sendFile(self, files:list) -> bool:
+    def sendFile(self, files: list) -> bool:
         """
         send given files via FTP
         """
-        print(f"Send {files} via FTP") 
+        print(f"Send {files} via FTP")
         result = False
         if self.__config:
             ftpServer = self.__config.get("ftp.FTPserver")
             ftpUser = self.__config.get("ftp.FTPuser")
             ftpPasswd = self.__config.get("ftp.FTPpasswd")
             ftpDir = self.__config.get("ftp.FTPdir")
-            if ftpServer and ftpUser and ftpPasswd and ftpDir != None:
-                session = ftplib.FTP( ftpServer, ftpUser, ftpPasswd )
+            if ftpServer and ftpUser and ftpPasswd and ftpDir is not None:
+                session = ftplib.FTP(ftpServer, ftpUser, ftpPasswd)
                 if ftpDir:
-                    session.cwd( ftpDir )
+                    session.cwd(ftpDir)
                 # assume it works
                 result = True
                 for file in files:
                     try:
-                        with open(file,'rb') as fp:                         # file to send
+                        with open(file, 'rb') as fp:                        # file to send
                             session.storbinary('STOR ' + file, fp)          # send the file
                             fp.close()                                      # close file and FTP
-                    except:
+                    except Exception:
                         result = False
                 session.quit()
         if result:

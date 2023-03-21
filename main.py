@@ -11,6 +11,7 @@ import RveZeitApp
 import RveZeitUI
 import RveZeitFtp
 
+
 def main():
     config = RveZeitConfig.Config()
 
@@ -22,6 +23,7 @@ def main():
     app = RveZeitApp.App(config, ui, db, transport)
     app.start()
     ui.show()
+
 
 if __name__ == "__main__":
     main()

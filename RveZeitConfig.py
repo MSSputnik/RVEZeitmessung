@@ -25,6 +25,19 @@ class Config:
     __configFileName = "RVEZeit.ini"
     __defaultPosition = "Test"
 
+    # configVariables defines the availabel configuraion variables 
+    # which can be loaded from the .ini file.
+    # It maps the internal variable to the variable in the .ini file.
+    # It allows the validation of the variabe.
+    # "internal section": {
+    #   "internal parameter": {
+    #     "ini": "Defines the postion in the .ini. Format: SECTION.PARAMETER",
+    #     "default": "Default value",
+    #     "type": "string|boolean|float|int",
+    #     "min": "only for int or float. minimum allowed value. if value < minimum -> value = minimum",
+    #     "max": "only for int or float. maximum allowed value. if value > maximum -> value = maximum",
+    #   }
+    # }
     __configVariables = {
         "data": {
             "Position": {
@@ -35,6 +48,13 @@ class Config:
                 "ini": "DEFAULT.AutoIncrement",
                 "default": False,
                 "type": "boolean"
+            },
+            "InputGroups": {
+                "ini": "DEFAULT.InputGroups",
+                "default": 3,
+                "type": "int",
+                "min": 1,
+                "max": 3
             }
         },
         "ftp": {
@@ -75,6 +95,11 @@ class Config:
         # set title wenn position ist bekannt
         self.__configData["app"]["title"] = f"python TriaZeit mit Datenbank - {AppVersion} - " \
             + f"{self.__configData['data']['Position']}"
+
+        # print(json.dumps(self.__configData, indent=2))
+        # print()
+        # print(f"Input elements: {self.get('data.InputGroups')}")
+        # exit(0)
 
         # -- GUI Elemente
         self.__uiDesign["title"] = self.get("app.title")
@@ -191,144 +216,54 @@ class Config:
                     }
                 }]
         })
-        self.__uiDesign["uiElements"].append({
-            "name": "text1",
-            "type": "entry",
-            "description": "text entry 1",
-            "validation": {
-                "type": "integer",
-                "length": 4
-            },
-            "properties": {
-                "font": ("Hack", 26)
-            },
-            "placement": {
-                "x": 10,
-                "y": 35,
-                "width": 85,
-                "height": 60
-            }
-        })
-        self.__uiDesign["uiElements"].append({
-            "name": "btnCheck1",
-            "type": "button",
-            "description": "button check for text entry 1",
-            "properties": {
-                "text": "Check"
-            },
-            "placement": {
-                "x": 100,
-                "y": 35,
-                "width": 90,
-                "height": 30
-            }
-        })
-        self.__uiDesign["uiElements"].append({
-            "name": "btnCommit1",
-            "type": "button",
-            "description": "button commit for text entry 1",
-            "properties": {
-                "text": "Zeitnahme (s)"
-            },
-            "placement": {
-                "x": 100,
-                "y": 65,
-                "width": 90,
-                "height": 30
-            }
-        })
-        self.__uiDesign["uiElements"].append({
-            "name": "text2",
-            "type": "entry",
-            "description": "text entry 2",
-            "validation": {
-                "type": "integer",
-                "length": 4
-            },
-            "properties": {
-                "font": ("Hack", 26)
-            },
-            "placement": {
-                "x": 220,
-                "y": 35,
-                "width": 85,
-                "height": 60
-            }
-        })
-        self.__uiDesign["uiElements"].append({
-            "name": "btnCheck2",
-            "type": "button",
-            "description": "button check for text entry 2",
-            "properties": {
-                "text": "Check"
-            },
-            "placement": {
-                "x": 310,
-                "y": 35,
-                "width": 90,
-                "height": 30
-            }
-        })
-        self.__uiDesign["uiElements"].append({
-            "name": "btnCommit2",
-            "type": "button",
-            "description": "button commit for text entry 2",
-            "properties": {
-                "text": "Zeitnahme (d)"
-            },
-            "placement": {
-                "x": 310,
-                "y": 65,
-                "width": 90,
-                "height": 30
-            }
-        })
-        self.__uiDesign["uiElements"].append({
-            "name": "text3",
-            "type": "entry",
-            "description": "text entry 3",
-            "validation": {
-                "type": "integer",
-                "length": 4
-            },
-            "properties": {
-                "font": ("Hack", 26)
-            },
-            "placement": {
-                "x": 430,
-                "y": 35,
-                "width": 85,
-                "height": 60
-            }
-        })
-        self.__uiDesign["uiElements"].append({
-            "name": "btnCheck3",
-            "type": "button",
-            "description": "button check for text entry 3",
-            "properties": {
-                "text": "Check"
-            },
-            "placement": {
-                "x": 520,
-                "y": 35,
-                "width": 90,
-                "height": 30
-            }
-        })
-        self.__uiDesign["uiElements"].append({
-            "name": "btnCommit3",
-            "type": "button",
-            "description": "button commit for text entry 3",
-            "properties": {
-                "text": "Zeitnahme (f)"
-            },
-            "placement": {
-                "x": 520,
-                "y": 65,
-                "width": 90,
-                "height": 30
-            }
-        })
+        keys = ["s", "d", "f"]
+        for number in range(0, self.get('data.InputGroups')):
+            self.__uiDesign["uiElements"].append({
+                "name": f"text{number+1}",
+                "type": "entry",
+                "description": f"text entry {number+1}",
+                "validation": {
+                    "type": "integer",
+                    "length": 4
+                },
+                "properties": {
+                    "font": ("Hack", 26)
+                },
+                "placement": {
+                    "x": 10 + 210*number,
+                    "y": 35,
+                    "width": 85,
+                    "height": 60
+                }
+            })
+            self.__uiDesign["uiElements"].append({
+                "name": f"btnCheck{number+1}",
+                "type": "button",
+                "description": f"button check for text entry {number+1}",
+                "properties": {
+                    "text": "Check"
+                },
+                "placement": {
+                    "x": 100 + 210*number,
+                    "y": 35,
+                    "width": 90,
+                    "height": 30
+                }
+            })
+            self.__uiDesign["uiElements"].append({
+                "name": f"btnCommit{number+1}",
+                "type": "button",
+                "description": f"button commit for text entry {number+1}",
+                "properties": {
+                    "text": f"Zeitnahme ({keys[number]})"
+                },
+                "placement": {
+                    "x": 100 + 210*number,
+                    "y": 65,
+                    "width": 90,
+                    "height": 30
+                }
+            })
         self.__uiDesign["uiElements"].append({
             "name": "editH",
             "type": "entry",
@@ -617,8 +552,20 @@ class Config:
                                 value = config.get(iniArray[0], iniArray[1], fallback=defaultValue)
                             if valueType == "int":
                                 value = config.getint(iniArray[0], iniArray[1], fallback=defaultValue)
+                                if "min" in self.__configVariables[section][parameter]:
+                                    if value < self.__configVariables[section][parameter]["min"]:
+                                        value = self.__configVariables[section][parameter]["min"]
+                                if "max" in self.__configVariables[section][parameter]:
+                                    if value > self.__configVariables[section][parameter]["max"]:
+                                        value = self.__configVariables[section][parameter]["max"]
                             if valueType == "float":
                                 value = config.getfloat(iniArray[0], iniArray[1], fallback=defaultValue)
+                                if "min" in self.__configVariables[section][parameter]:
+                                    if value < self.__configVariables[section][parameter]["min"]:
+                                        value = self.__configVariables[section][parameter]["min"]
+                                if "max" in self.__configVariables[section][parameter]:
+                                    if value > self.__configVariables[section][parameter]["max"]:
+                                        value = self.__configVariables[section][parameter]["max"]
                             if section not in self.__configData:
                                 self.__configData[section] = {}
                             self.__configData[section][parameter] = value
@@ -658,8 +605,20 @@ class Config:
                                             value = bool(value)
                                         if valueType == "float":
                                             value = float(value)
+                                            if "min" in self.__configVariables[section][parameter]:
+                                                if value < self.__configVariables[section][parameter]["min"]:
+                                                    value = self.__configVariables[section][parameter]["min"]
+                                            if "max" in self.__configVariables[section][parameter]:
+                                                if value > self.__configVariables[section][parameter]["max"]:
+                                                    value = self.__configVariables[section][parameter]["max"]
                                         if valueType == "int":
                                             value = int(value)
+                                            if "min" in self.__configVariables[section][parameter]:
+                                                if value < self.__configVariables[section][parameter]["min"]:
+                                                    value = self.__configVariables[section][parameter]["min"]
+                                            if "max" in self.__configVariables[section][parameter]:
+                                                if value > self.__configVariables[section][parameter]["max"]:
+                                                    value = self.__configVariables[section][parameter]["max"]
                                     except Exception:
                                         pass
                                     self.__configData[section][parameter] = value

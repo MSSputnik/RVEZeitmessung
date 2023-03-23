@@ -48,6 +48,63 @@ class UI:
         if val:
             for element in val:
                 self.__addUIElement("window", element)
+        val = self.__config.getUI("menu")
+        if val:
+            self.__addMenu("window", val)
+
+    def __addMenu(self, base: str, element: dict):
+        """
+        Add Manin Menu to Window.
+        Calls creation of all subsequent elements in the menu tree
+        """
+        # print(f"Add Menu to {base}: {element}")
+        if base and base in self.__UIElements and element:
+            parent = self.__UIElements[base]
+            if "name" in element:
+                elementName = f"{base}.{element['name']}"
+                properties = {}
+                if "properties" in element:
+                    properties = element["properties"]
+                self.__UIElements[elementName] = tk.Menu(parent, **properties)
+                parent.config(menu=self.__UIElements[elementName])
+                if "elements" in element:
+                    for subElement in element["elements"]:
+                        self.__addMenuElement(elementName, subElement)
+
+    def __addMenuElement(self, base: str, element: dict):
+        """
+        Add a menu element
+        """
+        # print(f"* Add menu element to {base}. Element: {element}")
+        if base and base in self.__UIElements and element:
+            parent = self.__UIElements[base]
+            if "name" in element and "type" in element:
+                elementName = f"{base}.{element['name']}"
+                properties = {}
+                if "properties" in element:
+                    properties = element["properties"]
+                menuProperties = {}
+                if "menuProperties" in element:
+                    menuProperties = element["menuProperties"]
+                type = element["type"].lower()
+                if "cascade" == type:
+                    self.__addSubMenu(parent, elementName, properties, menuProperties)
+                if "separator" == type:
+                    parent.add_separator()
+                if "command" == type:
+                    parent.add_command(**properties)
+
+                if "elements" in element:
+                    for subElement in element["elements"]:
+                        self.__addMenuElement(elementName, subElement)
+
+    def __addSubMenu(self, parent, name: str, properties:  dict = {}, menuProperties: dict = {}):
+        """
+        add an sub menu
+        """
+        # print(f"** Add new Sub Menue {name}")
+        self.__UIElements[name] = tk.Menu(parent, **menuProperties)
+        parent.add_cascade(menu=self.__UIElements[name], **properties)
 
     def __addUIElement(self, base: str, element: dict):
         # print(f"Add to {base} new UI Element: {element}")

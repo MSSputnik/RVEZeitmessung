@@ -6,7 +6,6 @@ Created on 18.3.2023
 """
 
 import json
-import tkinter as tk
 import configparser
 
 
@@ -25,7 +24,7 @@ class Config:
     __configFileName = "RVEZeit.ini"
     __defaultPosition = "Test"
 
-    # configVariables defines the availabel configuraion variables 
+    # configVariables defines the availabel configuraion variables
     # which can be loaded from the .ini file.
     # It maps the internal variable to the variable in the .ini file.
     # It allows the validation of the variabe.
@@ -108,8 +107,74 @@ class Config:
             "width": False,
             "height":  False
         }
-        self.__uiDesign["uiElements"] = []
+        self.__uiDesign["menu"] = {
+            "name": "rootMenu",
+            "description": "Root Menu",
+            "properties": {},
+            "elements": [
+                {
+                    "name": "fileMenu",
+                    "type": "cascade",
+                    "description": "File Menu",
+                    "menuProperties": {
+                        "tearoff": 0
+                    },
+                    "properties": {
+                        "label": "File"
+                    },
+                    "elements": [
+                        {
+                            "name": "transfere",
+                            "type": "command",
+                            "description": "Transfere Command in File Menu",
+                            "properties": {
+                                "label": "FTP Transfere",
+                                "accelerator": "Ctrl+T"
+                            }
+                        },
+                        {
+                            "name": "sep1",
+                            "type": "separator",
+                            "description": "Separator before Exit"
+                        },
+                        {
+                            "name": "exit",
+                            "type": "command",
+                            "description": "Exit Command in File Menu",
+                            "properties": {
+                                "label": "Exit",
+                                "accelerator": "Ctrl+Q"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "helpMenu",
+                    "type": "cascade",
+                    "description": "Help Menu",
+                    "menuProperties": {
+                        "tearoff": 0
+                    },
+                    "properties": {
+                        "label": "Help"
+                    },
+                    "elements": [
+                        {
+                            "name": "about",
+                            "type": "command",
+                            "description": "About Command in Help Menu",
+                            "properties": {
+                                "label": "About...",
+                                "accelerator": "Ctrl+T"
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
 
+        # Add UI elements like labels, buttons, entries, and ...
+        self.__uiDesign["uiElements"] = []
         self.__uiDesign["uiElements"].append({
             "name": "lblTitle",
             "type": "label",
@@ -128,6 +193,7 @@ class Config:
                 "height": 30
             }
         })
+        """
         self.__uiDesign["uiElements"].append({
             "name": "lblChangeText",
             "type": "label",
@@ -482,7 +548,7 @@ class Config:
                 }
             ]
         })
-
+    """
     def __str__(self) -> str:
         """
         Get configuration as json formatted string

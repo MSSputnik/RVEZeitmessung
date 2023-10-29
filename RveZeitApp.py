@@ -54,6 +54,11 @@ class App:
             "redEntry": 'red.TEntry'
         }
 
+        # activate menues
+        ui.config_menu("window.rootMenu.fileMenu", 0, command=self.sendFile)
+        ui.config_menu("window.rootMenu.fileMenu", 2, command=self.exit)
+        ui.config_menu("window.rootMenu.helpMenu", 0, command=self.show_about)
+
         # activate scrollbar in listbox
         scrollbar = ui.getWidget("window.frmEntryList.frmEntryListScrollbar")
         listbox = ui.getWidget("window.frmEntryList.frmEntryListBox")
@@ -84,6 +89,9 @@ class App:
         ui.bind("window.text1", "<Return>", lambda event: self.zeitOf1())
         ui.bind("window.text2", "<Return>", lambda event: self.zeitOf2())
         ui.bind("window.text3", "<Return>", lambda event: self.zeitOf3())
+        ui.bind("window", "q", lambda event: self.exit())
+        ui.bind("window", "a", lambda event: self.show_about())
+        ui.bind("window", "t", lambda event: self.sendFile())
 
         # add picture
         logoFile = self.__config.get("app.logo")
@@ -163,7 +171,7 @@ class App:
         timeString = str(jetzt.tm_hour).zfill(2) + ":" + str(jetzt.tm_min).zfill(2) + ":" + str(jetzt.tm_sec).zfill(2)
         secToday = 3600*jetzt.tm_hour + 60*jetzt.tm_min + jetzt.tm_sec
         nostr = self.__ui.getValue(f"window.text{nummer}")
-        if len(nostr) > 0:
+        if not nostr is None and len(nostr) > 0:
             self.__db.upsertDataByNumber(nostr, timeString, jetzt.tm_hour, jetzt.tm_min, jetzt.tm_sec, secToday)
 
             if self.__config.get("data.AutoIncrement"):
@@ -300,7 +308,7 @@ class App:
             # Update, da sonst verunsichernd:
             self.refeshList()
 
-    # ========================================================================
+    # == FTP ======================================================================
     def writeLocalTrzFile(self):
         fileName = self.__config.get("data.TRZFile")
         if self.__writeTrzFile(fileName):
@@ -332,3 +340,11 @@ class App:
                 return True
         except Exception:
             return False
+
+    # -=== Menu Handler
+    def exit(self):
+        if messagebox.askyesno('Verify', 'Really quit?'):
+            self.__ui.exit()
+
+    def show_about(self):
+        messagebox.showinfo("About", f"RVEZeitmessung\n{self.__config.get('app.version')}")

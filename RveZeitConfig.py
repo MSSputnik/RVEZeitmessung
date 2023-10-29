@@ -7,9 +7,9 @@ Created on 18.3.2023
 
 import json
 import configparser
+import tkinter as tk
 
-
-AppVersion = "20230320-2037"
+AppVersion = "20231929-0931"
 
 
 class Config:
@@ -165,7 +165,7 @@ class Config:
                             "description": "About Command in Help Menu",
                             "properties": {
                                 "label": "About...",
-                                "accelerator": "Ctrl+T"
+                                "accelerator": "Ctrl+A"
                             }
                         }
                     ]
@@ -193,7 +193,6 @@ class Config:
                 "height": 30
             }
         })
-        """
         self.__uiDesign["uiElements"].append({
             "name": "lblChangeText",
             "type": "label",
@@ -548,7 +547,7 @@ class Config:
                 }
             ]
         })
-    """
+
     def __str__(self) -> str:
         """
         Get configuration as json formatted string

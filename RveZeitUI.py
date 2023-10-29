@@ -278,6 +278,10 @@ class UI:
         if name and name in self.__UIElements:
             self.__UIElements[name].config(values)
 
+    def config_menu(self, name: str, index: int, **values):
+        if name and name in self.__UIElements:
+            self.__UIElements[name].entryconfigure(index, values)
+
     def after(self, name: str, delay: int, callback=None):
         if name and name in self.__UIElements:
             self.__UIElements[name].after(delay, callback)
@@ -286,6 +290,11 @@ class UI:
         print("Show UI")
         if self.__baseName in self.__UIElements and self.__UIElements[self.__baseName] is not None:
             self.__UIElements[self.__baseName].mainloop()
+
+    def exit(self):
+        print("Exit UI")
+        if self.__baseName in self.__UIElements and self.__UIElements[self.__baseName] is not None:
+            self.__UIElements[self.__baseName].destroy()
 
     def insert(self, name: str, index: int, value: str):
         # print(f"Insert into {name} at {index}: {value}")

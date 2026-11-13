@@ -7,6 +7,7 @@ Created on 18.3.2023.
 
 # ftp export
 import ftplib
+from pathlib import Path
 
 from . import RveZeitConfig
 
@@ -36,7 +37,7 @@ class FTP:
                 result = True
                 for file in files:
                     try:
-                        with open(file, "rb") as fp:  # file to send
+                        with Path(file).open("rb") as fp:  # file to send
                             session.storbinary("STOR " + file, fp)  # send the file
                             fp.close()  # close file and FTP
                     except Exception:

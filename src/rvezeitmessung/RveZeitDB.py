@@ -5,8 +5,8 @@ Created on 18.3.2023.
 @author: Dr. Ulf Meerwald, Martin Schmidt
 """
 
-import os
 import sqlite3
+from pathlib import Path
 
 from . import RveZeitConfig
 
@@ -22,7 +22,7 @@ class DB:
         sqlite_file = config.get("data.SQLiteFile")
         print(f"Initialize Database {sqlite_file}")
         if sqlite_file:
-            if os.path.exists(sqlite_file):
+            if Path(sqlite_file).exists():
                 # Verbindung zur Datenbank erzeugen
                 self.__dbConnection = sqlite3.connect(sqlite_file)
                 # Datensatzcursor erzeugen
@@ -68,6 +68,7 @@ class DB:
             print("ERROR: No SQLiteFile specified in configuration.")
 
     def __del__(self):
+        """Close the database connection when the object is destroyed."""
         print("Close Database")
         # Verbindung beend
         if self.__dbConnection:
@@ -109,22 +110,22 @@ class DB:
 
     def insert_data_by_number(
         self,
-        nummer: str,
-        timeString: str,
+        number: str,
+        time_string: str,
         hour: int,
         minuten: int,
         sekunden: int,
-        secToday: int,
+        sec_today: int,
         backup1: int = 0,
         backup2: int = 0,
     ):
         """Create new zeiten entry."""
-        if self.__dbCursor and nummer is not None and nummer != "":
+        if self.__dbCursor and number is not None and number != "":
             sql = (
                 "INSERT INTO zeiten "
                 + "(nummer, timeString, h, min, sec, secToday, backup1, backup2)"
-                + f"VALUES( '{nummer}', '{timeString}', {hour}, {minuten}, {sekunden}, "
-                + f"{secToday}, {backup1}, {backup2})"
+                + f"VALUES( '{number}', '{time_string}', {hour}, {minuten}, {sekunden}, "
+                + f"{sec_today}, {backup1}, {backup2})"
             )
             # print(sql)
             self.__dbCursor.execute(sql)
@@ -133,22 +134,22 @@ class DB:
     def update_data_by_number(
         self,
         nummer: str,
-        timeString: str,
+        time_string: str,
         hour: int,
         minuten: int,
         sekunden: int,
-        secToday: int,
+        sec_today: int,
         backup1: int = 0,
         backup2: int = 0,
-        oldSecToday: int = 0,
+        old_sec_today: int = 0,
         comment: str = "New time for",
     ):
         """Update new zeiten entry."""
         if self.__dbCursor and nummer is not None and nummer != "":
             sql = (
                 "UPDATE zeiten SET "
-                + f"timeString = '{timeString}', "
-                + f"h = {hour}, min = {minuten}, sec = {sekunden}, secToday = {secToday}"
+                + f"timeString = '{time_string}', "
+                + f"h = {hour}, min = {minuten}, sec = {sekunden}, secToday = {sec_today}"
                 + f", backup1 = {backup1}, backup2 = {backup2} "
                 + f"WHERE nummer = {nummer}"
             )
@@ -159,8 +160,8 @@ class DB:
             sql = (
                 "INSERT INTO meta "
                 + "(timeString, h, min, sec, name, int, data) "
-                + f"VALUES( '{timeString}', {hour}, {minuten}, {sekunden}, "
-                + f"'{comment}', {nummer}, 'from {oldSecToday} to {timeString}')"
+                + f"VALUES( '{time_string}', {hour}, {minuten}, {sekunden}, "
+                + f"'{comment}', {nummer}, 'from {old_sec_today} to {time_string}')"
             )
             # print(sql)
             self.__dbCursor.execute(sql)
@@ -169,29 +170,29 @@ class DB:
     def upsert_data_by_number(
         self,
         nummer: str,
-        timeString: str,
+        time_string: str,
         hour: int,
         minuten: int,
         sekunden: int,
-        secToday: int,
+        sec_today: int,
         backup1: int = 0,
         backup2: int = 0,
     ):
         """Insert or update data entry depending if number already exists in database."""
         row = self.get_data_by_number(nummer)
         if row is None:
-            self.insert_data_by_number(nummer, timeString, hour, minuten, sekunden, secToday)
+            self.insert_data_by_number(nummer, time_string, hour, minuten, sekunden, sec_today)
         else:
             self.update_data_by_number(
                 nummer,
-                timeString,
+                time_string,
                 hour,
                 minuten,
                 sekunden,
-                secToday,
+                sec_today,
                 backup1=row[5],
                 backup2=row[6],
-                oldSecToday=row[1],
+                old_sec_today=row[1],
             )
 
     def delete_data_by_number(self, nummer: str):
@@ -204,11 +205,11 @@ class DB:
             self.__dbConnection.commit()
 
     def get_all_data(self) -> list:
-        """Get alle zeiten einträge."""
+        """Get all time entries."""
         result = []
         if self.__dbCursor:
             sql = "SELECT * FROM zeiten ORDER BY secToday desc"
             self.__dbCursor.execute(sql)
-            for satz in self.__dbCursor:
-                result.append(satz)
+            for entry in self.__dbCursor:
+                result.append(entry)
         return result

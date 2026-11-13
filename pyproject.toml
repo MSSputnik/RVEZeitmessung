@@ -67,6 +67,11 @@ convention = "numpy"
 [tool.ruff.lint.per-file-ignores]
 # Tests don't need module/function docstrings; test names are self-describing.
 "tests/*" = ["D100", "D103"]
+# The package deliberately uses PascalCase module names (RveZeit*), which are
+# referenced as module names and type annotations throughout the codebase.
+# Renaming them would be a cross-package refactor, so the module-name rule is
+# ignored for these files rather than enforced.
+"src/rvezeitmessung/RveZeit*.py" = ["N999"]
 
 [tool.ty.rules]
 # Make the type check mandatory: treat every ty diagnostic as an error so the

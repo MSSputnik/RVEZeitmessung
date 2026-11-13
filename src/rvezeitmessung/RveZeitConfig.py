@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""
+"""Configuration handling for RVE Zeit.
+
 Created on 18.3.2023
 @author: Dr. Ulf Meerwald, Martin Schmidt
 """
@@ -7,26 +8,28 @@ Created on 18.3.2023
 import configparser
 import json
 import tkinter as tk
+from pathlib import Path
+from typing import Any, ClassVar
 
-AppVersion = "20231929-0931"
+AppVersion = "20261113-1541"
 
 
 class Config:
-    """
-    Configuration for RVE Zeit
-    The program options can be retieved by the function `get(property: str)`
-    The GUI layout can be retrieved by `getUI()`
+    """Configuration for RVE Zeit.
+
+    The program options can be retrieved by the function `get(property: str)`.
+    The GUI layout can be retrieved by `get_ui()`.
     """
 
-    __configData = {}
-    __uiDesign = {}
-    __configFileName = "RVEZeit.ini"
-    __defaultPosition = "Test"
+    __config_data: ClassVar[dict] = {}
+    __ui_design: ClassVar[dict] = {}
+    __config_file_name = "RVEZeit.ini"
+    __default_position = "Test"
 
-    # configVariables defines the availabel configuraion variables
+    # configVariables defines the available configuration variables
     # which can be loaded from the .ini file.
     # It maps the internal variable to the variable in the .ini file.
-    # It allows the validation of the variabe.
+    # It allows the validation of the variable.
     # "internal section": {
     #   "internal parameter": {
     #     "ini": "Defines the postion in the .ini. Format: SECTION.PARAMETER",
@@ -36,9 +39,9 @@ class Config:
     #     "max": "only for int or float. maximum allowed value. if value > maximum -> value = maximum",
     #   }
     # }
-    __configVariables = {
+    __config_variables: ClassVar[dict] = {
         "data": {
-            "Position": {"ini": "DEFAULT.Position", "default": __defaultPosition},
+            "Position": {"ini": "DEFAULT.Position", "default": __default_position},
             "AutoIncrement": {"ini": "DEFAULT.AutoIncrement", "default": False, "type": "boolean"},
             "InputGroups": {"ini": "DEFAULT.InputGroups", "default": 3, "type": "int", "min": 1, "max": 3},
         },
@@ -51,38 +54,36 @@ class Config:
     }
 
     def __init__(self):
-        """
-        Load configuration from various sources
-        """
+        """Load configuration from various sources."""
         # -- Applikationskonfiguration
-        self.__configData = {}
-        self.__configData["app"] = {}
-        self.__configData["app"]["version"] = AppVersion
-        self.__configData["app"]["logo"] = "RVE-Logo.gif"
-        self.__configData["data"] = {}
-        self.__configData["data"]["Position"] = self.__defaultPosition
+        self.__config_data = {}
+        self.__config_data["app"] = {}
+        self.__config_data["app"]["version"] = AppVersion
+        self.__config_data["app"]["logo"] = "RVE-Logo.gif"
+        self.__config_data["data"] = {}
+        self.__config_data["data"]["Position"] = self.__default_position
         # Load configuration from .ini file
-        self.__loadConfigFromINI()
+        self.__load_config_from_ini()
 
         # set parameter which are only nown after loading from .ini file
-        self.__configData["data"]["TRZFile"] = f"{self.__configData['data']['Position']}.trz"
-        self.__configData["data"]["SQLiteFile"] = f"{self.__configData['data']['Position']}.db"
+        self.__config_data["data"]["TRZFile"] = f"{self.__config_data['data']['Position']}.trz"
+        self.__config_data["data"]["SQLiteFile"] = f"{self.__config_data['data']['Position']}.db"
 
         # set title wenn position ist bekannt
-        self.__configData["app"]["title"] = (
-            f"python TriaZeit mit Datenbank - {AppVersion} - " + f"{self.__configData['data']['Position']}"
+        self.__config_data["app"]["title"] = (
+            f"python TriaZeit mit Datenbank - {AppVersion} - " + f"{self.__config_data['data']['Position']}"
         )
 
-        # print(json.dumps(self.__configData, indent=2))
+        # print(json.dumps(self.__config_data, indent=2))
         # print()
         # print(f"Input elements: {self.get('data.InputGroups')}")
         # exit(0)
 
         # -- GUI Elemente
-        self.__uiDesign["title"] = self.get("app.title")
-        self.__uiDesign["geometry"] = "800x600"
-        self.__uiDesign["resizable"] = {"width": False, "height": False}
-        self.__uiDesign["menu"] = {
+        self.__ui_design["title"] = self.get("app.title")
+        self.__ui_design["geometry"] = "800x600"
+        self.__ui_design["resizable"] = {"width": False, "height": False}
+        self.__ui_design["menu"] = {
             "name": "rootMenu",
             "description": "Root Menu",
             "properties": {},
@@ -95,10 +96,10 @@ class Config:
                     "properties": {"label": "File"},
                     "elements": [
                         {
-                            "name": "transfere",
+                            "name": "transfer",
                             "type": "command",
-                            "description": "Transfere Command in File Menu",
-                            "properties": {"label": "FTP Transfere", "accelerator": "Ctrl+T"},
+                            "description": "Transfer Command in File Menu",
+                            "properties": {"label": "FTP Transfer", "accelerator": "Ctrl+T"},
                         },
                         {"name": "sep1", "type": "separator", "description": "Separator before Exit"},
                         {
@@ -128,8 +129,8 @@ class Config:
         }
 
         # Add UI elements like labels, buttons, entries, and ...
-        self.__uiDesign["uiElements"] = []
-        self.__uiDesign["uiElements"].append(
+        self.__ui_design["uiElements"] = []
+        self.__ui_design["uiElements"].append(
             {
                 "name": "lblTitle",
                 "type": "label",
@@ -144,7 +145,7 @@ class Config:
                 "placement": {"x": 10, "y": 5, "width": 390, "height": 30},
             }
         )
-        self.__uiDesign["uiElements"].append(
+        self.__ui_design["uiElements"].append(
             {
                 "name": "lblChangeText",
                 "type": "label",
@@ -159,7 +160,7 @@ class Config:
                 "placement": {"x": 10, "y": 110, "width": 205, "height": 30},
             }
         )
-        self.__uiDesign["uiElements"].append(
+        self.__ui_design["uiElements"].append(
             {
                 "name": "lblChangeStatus",
                 "type": "label",
@@ -174,7 +175,7 @@ class Config:
                 "placement": {"x": 10, "y": 210, "width": 400, "height": 30},
             }
         )
-        self.__uiDesign["uiElements"].append(
+        self.__ui_design["uiElements"].append(
             {
                 "name": "lblClock",
                 "type": "label",
@@ -190,7 +191,7 @@ class Config:
                 "placement": {"x": 200, "y": 500, "width": 400, "height": 80},
             }
         )
-        self.__uiDesign["uiElements"].append(
+        self.__ui_design["uiElements"].append(
             {
                 "name": "frmEntryList",
                 "type": "frame",
@@ -215,7 +216,7 @@ class Config:
         )
         keys = ["s", "d", "f"]
         for number in range(0, self.get("data.InputGroups")):
-            self.__uiDesign["uiElements"].append(
+            self.__ui_design["uiElements"].append(
                 {
                     "name": f"text{number + 1}",
                     "type": "entry",
@@ -225,7 +226,7 @@ class Config:
                     "placement": {"x": 10 + 210 * number, "y": 35, "width": 85, "height": 60},
                 }
             )
-            self.__uiDesign["uiElements"].append(
+            self.__ui_design["uiElements"].append(
                 {
                     "name": f"btnCheck{number + 1}",
                     "type": "button",
@@ -234,7 +235,7 @@ class Config:
                     "placement": {"x": 100 + 210 * number, "y": 35, "width": 90, "height": 30},
                 }
             )
-            self.__uiDesign["uiElements"].append(
+            self.__ui_design["uiElements"].append(
                 {
                     "name": f"btnCommit{number + 1}",
                     "type": "button",
@@ -243,7 +244,7 @@ class Config:
                     "placement": {"x": 100 + 210 * number, "y": 65, "width": 90, "height": 30},
                 }
             )
-        self.__uiDesign["uiElements"].append(
+        self.__ui_design["uiElements"].append(
             {
                 "name": "editH",
                 "type": "entry",
@@ -253,7 +254,7 @@ class Config:
                 "placement": {"x": 10, "y": 145, "width": 55, "height": 60},
             }
         )
-        self.__uiDesign["uiElements"].append(
+        self.__ui_design["uiElements"].append(
             {
                 "name": "editM",
                 "type": "entry",
@@ -263,7 +264,7 @@ class Config:
                 "placement": {"x": 110, "y": 145, "width": 55, "height": 60},
             }
         )
-        self.__uiDesign["uiElements"].append(
+        self.__ui_design["uiElements"].append(
             {
                 "name": "editS",
                 "type": "entry",
@@ -273,7 +274,7 @@ class Config:
                 "placement": {"x": 210, "y": 145, "width": 55, "height": 60},
             }
         )
-        self.__uiDesign["uiElements"].append(
+        self.__ui_design["uiElements"].append(
             {
                 "name": "lblDoppelpunkt1",
                 "type": "label",
@@ -282,7 +283,7 @@ class Config:
                 "placement": {"x": 80, "y": 160},
             }
         )
-        self.__uiDesign["uiElements"].append(
+        self.__ui_design["uiElements"].append(
             {
                 "name": "lblDoppelpunkt2",
                 "type": "label",
@@ -291,7 +292,7 @@ class Config:
                 "placement": {"x": 180, "y": 160},
             }
         )
-        self.__uiDesign["uiElements"].append(
+        self.__ui_design["uiElements"].append(
             {
                 "name": "btnChangeGet",
                 "type": "button",
@@ -300,7 +301,7 @@ class Config:
                 "placement": {"x": 300, "y": 125, "width": 100, "height": 30},
             }
         )
-        self.__uiDesign["uiElements"].append(
+        self.__ui_design["uiElements"].append(
             {
                 "name": "btnChangeSave",
                 "type": "button",
@@ -309,7 +310,7 @@ class Config:
                 "placement": {"x": 300, "y": 165, "width": 100, "height": 30},
             }
         )
-        self.__uiDesign["uiElements"].append(
+        self.__ui_design["uiElements"].append(
             {
                 "name": "btnChangeDelete",
                 "type": "button",
@@ -318,7 +319,7 @@ class Config:
                 "placement": {"x": 300, "y": 205, "width": 100, "height": 30},
             }
         )
-        self.__uiDesign["uiElements"].append(
+        self.__ui_design["uiElements"].append(
             {
                 "name": "btnUpdateList",
                 "type": "button",
@@ -327,7 +328,7 @@ class Config:
                 "placement": {"x": 300, "y": 395, "width": 100, "height": 30},
             }
         )
-        self.__uiDesign["uiElements"].append(
+        self.__ui_design["uiElements"].append(
             {
                 "name": "btnSaveLocal",
                 "type": "button",
@@ -336,16 +337,16 @@ class Config:
                 "placement": {"x": 10, "y": 275, "width": 100, "height": 30},
             }
         )
-        self.__uiDesign["uiElements"].append(
+        self.__ui_design["uiElements"].append(
             {
-                "name": "btnTransfere",
+                "name": "btnTransfer",
                 "type": "button",
                 "description": "button start ftp transfer",
                 "properties": {"text": "FTP Transfer"},
                 "placement": {"x": 10, "y": 315, "width": 100, "height": 30},
             }
         )
-        self.__uiDesign["uiElements"].append(
+        self.__ui_design["uiElements"].append(
             {
                 "name": "radioAutoincrement",
                 "type": "radiobutton",
@@ -354,16 +355,16 @@ class Config:
                 "placement": {"x": 10, "y": 355, "width": 150},
             }
         )
-        self.__uiDesign["uiElements"].append(
+        self.__ui_design["uiElements"].append(
             {
-                "name": "radioAutoclear",
+                "name": "radioAutoClear",
                 "type": "radiobutton",
-                "description": "radio button Autoclear",
+                "description": "radio button AutoClear",
                 "properties": {"text": "Automatic Clear", "value": 0},
                 "placement": {"x": 10, "y": 375, "width": 150},
             }
         )
-        self.__uiDesign["uiElements"].append(
+        self.__ui_design["uiElements"].append(
             {
                 "name": "frmLogo",
                 "type": "frame",
@@ -383,91 +384,91 @@ class Config:
         )
 
     def __str__(self) -> str:
-        """
-        Get configuration as json formatted string
-        """
-        return json.dumps(self.__configData, indent=2)
+        """Return the configuration as a JSON formatted string."""
+        return json.dumps(self.__config_data, indent=2)
 
-    def get(self, property: str, default: any = None) -> any:
-        """
-        Get the property value.
+    def get(self, prop: str, default: Any = None) -> any:
+        """Get the property value.
+
         Separate level with `.`. e.g. Application Version: app.version
         """
-        configData = None
-        if property is not None:
-            keyList = property.split(".")
-            configData = self.__configData
-            for key in keyList:
-                if key in configData:
-                    configData = configData[key]
-                else:
-                    configData = None
+        config_data = None
+        if prop is not None:
+            key_list = prop.split(".")
+            config_data = self.__config_data
+            for key in key_list:
+                config_data = config_data.get(key, None)
 
-        return configData
+        return config_data
 
-    def getUI(self, property: str, default: any = None) -> any:
-        """
-        Get the property value from the UI Design
+    def get_ui(self, prop: str, default: Any | None = None) -> Any:
+        """Get the property value from the UI design.
+
         Separate level with `.`.
         """
-        uiData = None
-        if property is not None:
-            keyList = property.split(".")
-            uiData = self.__uiDesign
-            for key in keyList:
-                if key in uiData:
-                    uiData = uiData[key]
-                else:
-                    uiData = None
-        return uiData
+        ui_data = None
+        if prop is not None:
+            key_list = prop.split(".")
+            ui_data = self.__ui_design
+            for key in key_list:
+                ui_data = ui_data.get(key, None)
+        return ui_data
 
-    def __loadConfigFromINI(self):
-        """
-        Load configigruation from .ini file into runtime configuration.
-        Uses __configVariables to map internal to .ini variables.
+    def __load_config_from_ini(self):
+        """Load configuration from the .ini file into runtime configuration.
+
+        Uses __config_variables to map internal to .ini variables.
         """
         config = configparser.ConfigParser()
         try:
-            config.read(self.__configFileName)
+            config.read(self.__config_file_name)
 
-            for section in self.__configVariables:
-                for parameter in self.__configVariables[section]:
-                    iniPath = None
+            for section in self.__config_variables:
+                for parameter in self.__config_variables[section]:
+                    ini_path = None
                     value = None
-                    if "ini" in self.__configVariables[section][parameter]:
-                        iniPath = self.__configVariables[section][parameter]["ini"]
-                    defaultValue = None
-                    if "default" in self.__configVariables[section][parameter]:
-                        defaultValue = self.__configVariables[section][parameter]["default"]
-                    valueType = "string"
-                    if "type" in self.__configVariables[section][parameter]:
-                        valueType = self.__configVariables[section][parameter]["type"]
-                    if iniPath:
-                        iniArray = iniPath.split(".")
-                        if len(iniArray) == 2:
-                            if valueType == "boolean":
-                                value = config.getboolean(iniArray[0], iniArray[1], fallback=defaultValue)
-                            if valueType == "string":
-                                value = config.get(iniArray[0], iniArray[1], fallback=defaultValue)
-                            if valueType == "int":
-                                value = config.getint(iniArray[0], iniArray[1], fallback=defaultValue)
-                                if "min" in self.__configVariables[section][parameter]:
-                                    if value < self.__configVariables[section][parameter]["min"]:
-                                        value = self.__configVariables[section][parameter]["min"]
-                                if "max" in self.__configVariables[section][parameter]:
-                                    if value > self.__configVariables[section][parameter]["max"]:
-                                        value = self.__configVariables[section][parameter]["max"]
-                            if valueType == "float":
-                                value = config.getfloat(iniArray[0], iniArray[1], fallback=defaultValue)
-                                if "min" in self.__configVariables[section][parameter]:
-                                    if value < self.__configVariables[section][parameter]["min"]:
-                                        value = self.__configVariables[section][parameter]["min"]
-                                if "max" in self.__configVariables[section][parameter]:
-                                    if value > self.__configVariables[section][parameter]["max"]:
-                                        value = self.__configVariables[section][parameter]["max"]
-                            if section not in self.__configData:
-                                self.__configData[section] = {}
-                            self.__configData[section][parameter] = value
+                    if "ini" in self.__config_variables[section][parameter]:
+                        ini_path = self.__config_variables[section][parameter]["ini"]
+                    default_value = None
+                    if "default" in self.__config_variables[section][parameter]:
+                        default_value = self.__config_variables[section][parameter]["default"]
+                    value_type = "string"
+                    if "type" in self.__config_variables[section][parameter]:
+                        value_type = self.__config_variables[section][parameter]["type"]
+                    if ini_path:
+                        ini_array = ini_path.split(".")
+                        if len(ini_array) == 2:
+                            if value_type == "boolean":
+                                value = config.getboolean(ini_array[0], ini_array[1], fallback=default_value)
+                            if value_type == "string":
+                                value = config.get(ini_array[0], ini_array[1], fallback=default_value)
+                            if value_type == "int":
+                                value = config.getint(ini_array[0], ini_array[1], fallback=default_value)
+                                if (
+                                    "min" in self.__config_variables[section][parameter]
+                                    and value < self.__config_variables[section][parameter]["min"]
+                                ):
+                                    value = self.__config_variables[section][parameter]["min"]
+                                if (
+                                    "max" in self.__config_variables[section][parameter]
+                                    and value > self.__config_variables[section][parameter]["max"]
+                                ):
+                                    value = self.__config_variables[section][parameter]["max"]
+                            if value_type == "float":
+                                value = config.getfloat(ini_array[0], ini_array[1], fallback=default_value)
+                                if (
+                                    "min" in self.__config_variables[section][parameter]
+                                    and value < self.__config_variables[section][parameter]["min"]
+                                ):
+                                    value = self.__config_variables[section][parameter]["min"]
+                                if (
+                                    "max" in self.__config_variables[section][parameter]
+                                    and value > self.__config_variables[section][parameter]["max"]
+                                ):
+                                    value = self.__config_variables[section][parameter]["max"]
+                            if section not in self.__config_data:
+                                self.__config_data[section] = {}
+                            self.__config_data[section][parameter] = value
 
                         else:
                             print(
@@ -480,58 +481,65 @@ class Config:
                             + f"ini path for {section}.{parameter} is missing."
                         )
         except Exception as e:
-            print(f"ERROR: Laden der Konfiguration '{self.__configFileName}' fehlgeschlagen: {e}")
+            print(f"ERROR: Laden der Konfiguration '{self.__config_file_name}' fehlgeschlagen: {e}")
             exit(1)
 
-    def updateConfig(self, section, parameter, value) -> bool:
-        """
-        Write the given value to the configuration .ini file.
+    def update_config(self, section, parameter, value) -> bool:
+        """Write the given value to the configuration .ini file.
+
         section and parameter are the internal values.
         They are translated by this function to the actual values for the .ini file.
         """
         result = False
         if section and parameter:
-            if section in self.__configVariables:
-                if parameter in self.__configVariables[section]:
-                    if "ini" in self.__configVariables[section][parameter]:
-                        iniPath = self.__configVariables[section][parameter]["ini"]
-                        if iniPath:
-                            valueType = "string"
-                            if "type" in self.__configVariables[section][parameter]:
-                                valueType = self.__configVariables[section][parameter]["type"]
-                            iniArray = iniPath.split(".")
-                            if len(iniArray) == 2:
+            if section in self.__config_variables:
+                if parameter in self.__config_variables[section]:
+                    if "ini" in self.__config_variables[section][parameter]:
+                        ini_path = self.__config_variables[section][parameter]["ini"]
+                        if ini_path:
+                            value_type = "string"
+                            if "type" in self.__config_variables[section][parameter]:
+                                value_type = self.__config_variables[section][parameter]["type"]
+                            ini_array = ini_path.split(".")
+                            if len(ini_array) == 2:
                                 # After validating everything, now do the actual update.
-                                if section in self.__configData:
+                                if section in self.__config_data:
                                     try:
-                                        if valueType == "boolean":
+                                        if value_type == "boolean":
                                             value = bool(value)
-                                        if valueType == "float":
+                                        if value_type == "float":
                                             value = float(value)
-                                            if "min" in self.__configVariables[section][parameter]:
-                                                if value < self.__configVariables[section][parameter]["min"]:
-                                                    value = self.__configVariables[section][parameter]["min"]
-                                            if "max" in self.__configVariables[section][parameter]:
-                                                if value > self.__configVariables[section][parameter]["max"]:
-                                                    value = self.__configVariables[section][parameter]["max"]
-                                        if valueType == "int":
+                                            if (
+                                                "min" in self.__config_variables[section][parameter]
+                                                and value < self.__config_variables[section][parameter]["min"]
+                                            ):
+                                                value = self.__config_variables[section][parameter]["min"]
+                                            if (
+                                                "max" in self.__config_variables[section][parameter]
+                                                and value > self.__config_variables[section][parameter]["max"]
+                                            ):
+                                                value = self.__config_variables[section][parameter]["max"]
+                                        if value_type == "int":
                                             value = int(value)
-                                            if "min" in self.__configVariables[section][parameter]:
-                                                if value < self.__configVariables[section][parameter]["min"]:
-                                                    value = self.__configVariables[section][parameter]["min"]
-                                            if "max" in self.__configVariables[section][parameter]:
-                                                if value > self.__configVariables[section][parameter]["max"]:
-                                                    value = self.__configVariables[section][parameter]["max"]
+                                            if (
+                                                "min" in self.__config_variables[section][parameter]
+                                                and value < self.__config_variables[section][parameter]["min"]
+                                            ):
+                                                value = self.__config_variables[section][parameter]["min"]
+                                            if (
+                                                "max" in self.__config_variables[section][parameter]
+                                                and value > self.__config_variables[section][parameter]["max"]
+                                            ):
+                                                value = self.__config_variables[section][parameter]["max"]
                                     except Exception:
                                         pass
-                                    self.__configData[section][parameter] = value
+                                    self.__config_data[section][parameter] = value
                                 # Update .ini file
                                 config = configparser.ConfigParser()
-                                config.read(self.__configFileName)
-                                config.set(iniArray[0], iniArray[1], str(value))
-                                with open(self.__configFileName, "w") as fp:
-                                    config.write(fp, self.__configFileName)
-                                    fp.close()
+                                config.read(self.__config_file_name)
+                                config.set(ini_array[0], ini_array[1], str(value))
+                                with Path(self.__config_file_name).open("w") as fp:
+                                    config.write(fp, self.__config_file_name)
                             else:
                                 print(
                                     "ERROR: configVariables definition error. "
@@ -548,9 +556,9 @@ class Config:
                             + f"ini path for {section}.{parameter} is missing."
                         )
                 else:
-                    print(f"ERROR: updateConfig unknown parameter {parameter} in {section}.")
+                    print(f"ERROR: update_config unknown parameter {parameter} in {section}.")
             else:
-                print(f"ERROR: updateConfig unknown section {section}.")
+                print(f"ERROR: update_config unknown section {section}.")
         else:
-            print("ERROR: updateConfig given section or parameter is empty.")
+            print("ERROR: update_config given section or parameter is empty.")
         return result

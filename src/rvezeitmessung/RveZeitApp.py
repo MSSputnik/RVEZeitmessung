@@ -76,7 +76,7 @@ class App:
         ui.config("window.btnChangeSave", command=self.change_tme)
         ui.config("window.btnChangeDelete", command=self.delete_time)
         ui.config("window.btnSaveLocal", command=self.write_local_trz_file)
-        ui.config("window.btnTransferred", command=self.send_file)
+        ui.config("window.btnTransfer", command=self.send_file)
 
         # activate key actions
         ui.bind("window", "s", lambda event: self.zeit_of1())
@@ -220,7 +220,7 @@ class App:
                     old_minutes = math.floor((row[6] - 3600 * old_hour) / 60)
                     old_seconds = row[6] - 3600 * old_hour - 60 * old_minutes
                     old_data = old_data + " (" + str(old_hour).zfill(2) + ":" + str(old_minutes).zfill(2)
-                    + ":" + str(old_seconds).zfill(2)
+                    +":" + str(old_seconds).zfill(2)
                     if row[7] > 0:
                         old_hour = math.floor(row[7] / 3600)
                         old_minutes = math.floor((row[7] - 3600 * old_hour) / 60)

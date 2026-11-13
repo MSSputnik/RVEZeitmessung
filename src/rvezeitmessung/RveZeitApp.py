@@ -1,37 +1,37 @@
-"""
+"""Main application logic for RVE Zeitmessung.
+
 Created on 18.3.2023
+
 @author: Dr. Ulf Meerwald, Martin Schmidt
 """
 
 import math
 import time
 import tkinter as tk
+from pathlib import Path
 from tkinter import messagebox, ttk
+from typing import ClassVar
 
 from . import RveZeitConfig, RveZeitDB, RveZeitFtp, RveZeitUI
 
 
 class App:
-    """
-    This class contains the actual application code
-    """
+    """Contain the actual application code."""
 
     __config: RveZeitConfig = None
     __ui: RveZeitUI = None
     __changeNr = None
     __transport = None
-    __styles = {}
+    __styles: ClassVar[dict] = {}
 
     def __init__(self, config: RveZeitConfig, ui: RveZeitUI, db: RveZeitDB, transport: RveZeitFtp):
-        """
-        No idea what will be done here.
-        """
+        """Initialize the application, wiring up UI, database and transport."""
         self.__config = config
         self.__ui = ui
         self.__db = db
         self.__transport = transport
 
-        maxNumber = db.getMaxNumber()
+        max_number = db.get_max_number()
 
         # Create Styles
         green = "#109410"
@@ -51,202 +51,192 @@ class App:
         }
 
         # activate menues
-        ui.config_menu("window.rootMenu.fileMenu", 0, command=self.sendFile)
+        ui.config_menu("window.rootMenu.fileMenu", 0, command=self.send_file)
         ui.config_menu("window.rootMenu.fileMenu", 2, command=self.exit)
         ui.config_menu("window.rootMenu.helpMenu", 0, command=self.show_about)
 
         # activate scrollbar in listbox
-        scrollbar = ui.getWidget("window.frmEntryList.frmEntryListScrollbar")
-        listbox = ui.getWidget("window.frmEntryList.frmEntryListBox")
+        scrollbar = ui.get_widget("window.frmEntryList.frmEntryListScrollbar")
+        listbox = ui.get_widget("window.frmEntryList.frmEntryListBox")
         if listbox and scrollbar:
             listbox.config(yscrollcommand=scrollbar.set)
             scrollbar.config(command=listbox.yview)
 
         # activate buttons etc
         if self.__config.get("data.AutoIncrement"):
-            ui.insert("window.text1", 0, str(maxNumber + 1))
+            ui.insert("window.text1", 0, str(max_number + 1))
         ui.config("window.btnCheck1", command=self.check_1)
-        ui.config("window.btnCommit1", command=self.zeitOf1)
+        ui.config("window.btnCommit1", command=self.zeit_of1)
         ui.config("window.btnCheck2", command=self.check_2)
-        ui.config("window.btnCommit2", command=self.zeitOf2)
+        ui.config("window.btnCommit2", command=self.zeit_of2)
         ui.config("window.btnCheck3", command=self.check_3)
-        ui.config("window.btnCommit3", command=self.zeitOf3)
-        ui.config("window.btnUpdateList", command=self.refeshList)
-        ui.config("window.btnChangeGet", command=self.get4Modification)
-        ui.config("window.btnChangeSave", command=self.changeTime)
-        ui.config("window.btnChangeDelete", command=self.deleteTime)
-        ui.config("window.btnSaveLocal", command=self.writeLocalTrzFile)
-        ui.config("window.btnTransfere", command=self.sendFile)
+        ui.config("window.btnCommit3", command=self.zeit_of3)
+        ui.config("window.btnUpdateList", command=self.refresh_list)
+        ui.config("window.btnChangeGet", command=self.get4modification)
+        ui.config("window.btnChangeSave", command=self.change_tme)
+        ui.config("window.btnChangeDelete", command=self.delete_time)
+        ui.config("window.btnSaveLocal", command=self.write_local_trz_file)
+        ui.config("window.btnTransferred", command=self.send_file)
 
         # activate key actions
-        ui.bind("window", "s", lambda event: self.zeitOf1())
-        ui.bind("window", "d", lambda event: self.zeitOf2())
-        ui.bind("window", "f", lambda event: self.zeitOf3())
-        ui.bind("window.text1", "<Return>", lambda event: self.zeitOf1())
-        ui.bind("window.text2", "<Return>", lambda event: self.zeitOf2())
-        ui.bind("window.text3", "<Return>", lambda event: self.zeitOf3())
+        ui.bind("window", "s", lambda event: self.zeit_of1())
+        ui.bind("window", "d", lambda event: self.zeit_of2())
+        ui.bind("window", "f", lambda event: self.zeit_of3())
+        ui.bind("window.text1", "<Return>", lambda event: self.zeit_of1())
+        ui.bind("window.text2", "<Return>", lambda event: self.zeit_of2())
+        ui.bind("window.text3", "<Return>", lambda event: self.zeit_of3())
         ui.bind("window", "q", lambda event: self.exit())
         ui.bind("window", "a", lambda event: self.show_about())
-        ui.bind("window", "t", lambda event: self.sendFile())
+        ui.bind("window", "t", lambda event: self.send_file())
 
         # add picture
-        logoFile = self.__config.get("app.logo")
-        if logoFile:
-            self.__logo = tk.PhotoImage(name="logo", file=logoFile)
+        logo_file = self.__config.get("app.logo")
+        if logo_file:
+            self.__logo = tk.PhotoImage(name="logo", file=logo_file)
             ui.config("window.frmLogo.frmLogoImage", image=self.__logo)
 
         # fill list with data
-        self.refeshList()
+        self.refresh_list()
 
         # activate radiobuttons
         self.__autoValue = tk.IntVar()
-        ui.config("window.radioAutoincrement", variable=self.__autoValue, command=self.__updateAuto)
-        ui.config("window.radioAutoclear", variable=self.__autoValue, command=self.__updateAuto)
-        autoIncrement = self.__config.get("data.AutoIncrement")
-        if autoIncrement:
+        ui.config("window.radioAutoincrement", variable=self.__autoValue, command=self.__update_auto)
+        ui.config("window.radioAutoClear", variable=self.__autoValue, command=self.__update_auto)
+        auto_increment = self.__config.get("data.AutoIncrement")
+        if auto_increment:
             self.__autoValue.set(1)
         else:
             self.__autoValue.set(0)
 
     def start(self):
-        """Starte die Anwendung und die laufende Uhranzeige."""
-        self.__clocktime()
+        """Start the application and the running clock display."""
+        self.__clock_time()
 
-    def __clocktime(self):
-        """
-        This function is used to
-        display time on the label
-        """
+    def __clock_time(self):
+        """Display the current time on the label."""
         string = time.strftime("%H:%M:%S")
         self.__ui.config("window.lblClock", text=string)
-        self.__ui.after("window.lblClock", 500, self.__clocktime)
+        self.__ui.after("window.lblClock", 500, self.__clock_time)
 
     # ========================================================================
-    def __updateAuto(self):
-        """
-        Update the auto increment / clear functionallity and the configuration
-        """
-        newValue = self.__autoValue.get()
-        self.__config.updateConfig("data", "AutoIncrement", newValue == 1)
+    def __update_auto(self):
+        """Update the auto increment / clear functionality and the configuration."""
+        new_value = self.__autoValue.get()
+        self.__config.update_config("data", "AutoIncrement", new_value == 1)
 
     # ========================================================================
     def check_1(self):
         """Prüfe die Startnummer im ersten Eingabefeld."""
-        self.__checkNumber(1)
+        self.__check_number(1)
 
     def check_2(self):
         """Prüfe die Startnummer im zweiten Eingabefeld."""
-        self.__checkNumber(2)
+        self.__check_number(2)
 
     def check_3(self):
         """Prüfe die Startnummer im dritten Eingabefeld."""
-        self.__checkNumber(3)
+        self.__check_number(3)
 
-    def __checkNumber(self, nummer: int):
-        nostr = self.__ui.getValue(f"window.text{nummer}")
+    def __check_number(self, number: int):
+        nostr = self.__ui.get_value(f"window.text{number}")
         if len(nostr) > 0:
-            row = self.__db.getDataByNumber(nostr)
+            row = self.__db.get_data_by_number(nostr)
             if row is None:
-                self.__ui.config(f"window.btnCommit{nummer}", style=self.__styles["greenButton"])
-                self.__ui.config(f"window.text{nummer}", style=self.__styles["greenEntry"])
+                self.__ui.config(f"window.btnCommit{number}", style=self.__styles["greenButton"])
+                self.__ui.config(f"window.text{number}", style=self.__styles["greenEntry"])
             else:
-                self.__ui.config(f"window.btnCommit{nummer}", style=self.__styles["redButton"])
-                self.__ui.config(f"window.text{nummer}", style=self.__styles["redEntry"])
+                self.__ui.config(f"window.btnCommit{number}", style=self.__styles["redButton"])
+                self.__ui.config(f"window.text{number}", style=self.__styles["redEntry"])
 
     # ============================================================================================
-    def zeitOf1(self):
+    def zeit_of1(self):
         """Speichere die Zeit für das erste Eingabefeld."""
-        self.__speichereZeit(1)
+        self.__speichere_zeit(1)
 
-    def zeitOf2(self):
+    def zeit_of2(self):
         """Speichere die Zeit für das zweite Eingabefeld."""
-        self.__speichereZeit(2)
+        self.__speichere_zeit(2)
 
-    def zeitOf3(self):
+    def zeit_of3(self):
         """Speichere die Zeit für das dritte Eingabefeld."""
-        self.__speichereZeit(3)
+        self.__speichere_zeit(3)
 
-    def __speichereZeit(self, nummer: int):
-        """
-        Speichert die Bootsnummer und die aktuelle Zeit in der Datenbank.
-        """
+    def __speichere_zeit(self, number: int):
+        """Speichere die Bootsnummer und die aktuelle Zeit in der Datenbank."""
         jetzt = time.localtime()
-        timeString = str(jetzt.tm_hour).zfill(2) + ":" + str(jetzt.tm_min).zfill(2) + ":" + str(jetzt.tm_sec).zfill(2)
-        secToday = 3600 * jetzt.tm_hour + 60 * jetzt.tm_min + jetzt.tm_sec
-        nostr = self.__ui.getValue(f"window.text{nummer}")
+        time_string = str(jetzt.tm_hour).zfill(2) + ":" + str(jetzt.tm_min).zfill(2) + ":" + str(jetzt.tm_sec).zfill(2)
+        seconds_today = 3600 * jetzt.tm_hour + 60 * jetzt.tm_min + jetzt.tm_sec
+        nostr = self.__ui.get_value(f"window.text{number}")
         if nostr is not None and len(nostr) > 0:
-            self.__db.upsertDataByNumber(nostr, timeString, jetzt.tm_hour, jetzt.tm_min, jetzt.tm_sec, secToday)
+            self.__db.upsert_data_by_number(
+                nostr, time_string, jetzt.tm_hour, jetzt.tm_min, jetzt.tm_sec, seconds_today
+            )
 
             if self.__config.get("data.AutoIncrement"):
-                self.__ui.replace(f"window.text{nummer}", str(int(nostr) + 1))
+                self.__ui.replace(f"window.text{number}", str(int(nostr) + 1))
             else:
-                self.__ui.clear(f"window.text{nummer}")
+                self.__ui.clear(f"window.text{number}")
 
-            self.__ui.config(f"window.btnCommit{nummer}", style=self.__styles["defaultButton"])
-            self.__ui.config(f"window.text{nummer}", style=self.__styles["defaultEntry"])
-            self.refeshList()
+            self.__ui.config(f"window.btnCommit{number}", style=self.__styles["defaultButton"])
+            self.__ui.config(f"window.text{number}", style=self.__styles["defaultEntry"])
+            self.refresh_list()
         else:
             if self.__config.get("data.AutoIncrement"):
-                self.__ui.replace(f"window.text{nummer}", "0")
+                self.__ui.replace(f"window.text{number}", "0")
 
-            self.__ui.config(f"window.btnCommit{nummer}", style=self.__styles["redButton"])
-            self.__ui.config(f"window.text{nummer}", style=self.__styles["redEntry"])
+            self.__ui.config(f"window.btnCommit{number}", style=self.__styles["redButton"])
+            self.__ui.config(f"window.text{number}", style=self.__styles["redEntry"])
 
     # ========================================================================
-    def refeshList(self):
-        """
-        Update liste der vorhandenen nummern
-        """
-        # print("refeshList....")
+    def refresh_list(self):
+        """Update die Liste der vorhandenen Nummern."""
+        # print("refresh_list....")
         self.__ui.clear("window.frmEntryList.frmEntryListBox")
-        data = self.__db.getAllData()
-        for satz in data:
+        data = self.__db.get_all_data()
+        for entry in data:
             # listbox:
-            line = f"{satz[1]}    {str(satz[0]).zfill(4)}"
-            if satz[6] != 0:
+            line = f"{entry[1]}    {str(entry[0]).zfill(4)}"
+            if entry[6] != 0:
                 line = f"{line} (korrigiert)"
             self.__ui.insert("window.frmEntryList.frmEntryListBox", tk.END, line)
 
     # ========================================================================
-    def get4Modification(self):
-        """
-        Load selected entry from list into fields for editing.
-        """
-        entryText = self.__ui.curselection("window.frmEntryList.frmEntryListBox")
-        if entryText:
-            Nummer = entryText[12:16]
-            self.__changeNr = int(Nummer)
-            TRZtext = f"Change #{self.__changeNr}"
-            self.__ui.config("window.lblChangeText", text=TRZtext)
-            row = self.__db.getDataByNumber(self.__changeNr)
+    def get4modification(self):
+        """Load the selected entry from the list into the fields for editing."""
+        entry_text = self.__ui.curselection("window.frmEntryList.frmEntryListBox")
+        if entry_text:
+            number = entry_text[12:16]
+            self.__changeNr = int(number)
+            trz_text = f"Change #{self.__changeNr}"
+            self.__ui.config("window.lblChangeText", text=trz_text)
+            row = self.__db.get_data_by_number(self.__changeNr)
             if row:
                 self.__ui.replace("window.editH", str(row[2]).zfill(2))
                 self.__ui.replace("window.editM", str(row[3]).zfill(2))
                 self.__ui.replace("window.editS", str(row[4]).zfill(2))
-                myOLD = row[1]
+                old_data = row[1]
                 if row[6] > 0:
-                    oldH = math.floor(row[6] / 3600)
-                    oldM = math.floor((row[6] - 3600 * oldH) / 60)
-                    oldS = row[6] - 3600 * oldH - 60 * oldM
-                    myOLD = myOLD + " (" + str(oldH).zfill(2) + ":" + str(oldM).zfill(2) + ":" + str(oldS).zfill(2)
+                    old_hour = math.floor(row[6] / 3600)
+                    old_minutes = math.floor((row[6] - 3600 * old_hour) / 60)
+                    old_seconds = row[6] - 3600 * old_hour - 60 * old_minutes
+                    old_data = old_data + " (" + str(old_hour).zfill(2) + ":" + str(old_minutes).zfill(2)
+                    + ":" + str(old_seconds).zfill(2)
                     if row[7] > 0:
-                        oldH = math.floor(row[7] / 3600)
-                        oldM = math.floor((row[7] - 3600 * oldH) / 60)
-                        oldS = row[7] - 3600 * oldH - 60 * oldM
-                        myOLD = myOLD + " und " + str(oldH).zfill(2) + ":" + str(oldM).zfill(2)
-                        +":" + str(oldS).zfill(2)
-                    myOLD = myOLD + ")"
+                        old_hour = math.floor(row[7] / 3600)
+                        old_minutes = math.floor((row[7] - 3600 * old_hour) / 60)
+                        old_seconds = row[7] - 3600 * old_hour - 60 * old_minutes
+                        old_data = old_data + " und " + str(old_hour).zfill(2) + ":" + str(old_minutes).zfill(2)
+                        +":" + str(old_seconds).zfill(2)
+                    old_data = old_data + ")"
                 else:
-                    myOLD = myOLD + " <=  alte Zeit"
-                self.__ui.config("window.lblChangeStatus", text=myOLD)
+                    old_data = old_data + " <=  alte Zeit"
+                self.__ui.config("window.lblChangeStatus", text=old_data)
 
     # ========================================================================
-    def changeTime(self):
-        """
-        Update changed time entry in database
-        """
+    def change_tme(self):
+        """Update the changed time entry in the database."""
         if self.__changeNr is not None:
-            row = self.__db.getDataByNumber(self.__changeNr)
+            row = self.__db.get_data_by_number(self.__changeNr)
             if row:
                 print(f"Change row: {row}")
                 backup0 = row[5]
@@ -254,105 +244,103 @@ class App:
                 # backup2 = row[7]
                 #
                 try:
-                    newH = int(self.__ui.getValue("window.editH"))
+                    new_hour = int(self.__ui.get_value("window.editH"))
                 except Exception:
-                    newH = 0
+                    new_hour = 0
                 try:
-                    newM = int(self.__ui.getValue("window.editM"))
+                    new_minutes = int(self.__ui.get_value("window.editM"))
                 except Exception:
-                    newM = 0
+                    new_minutes = 0
                 try:
-                    newS = int(self.__ui.getValue("window.editS"))
+                    new_seconds = int(self.__ui.get_value("window.editS"))
                 except Exception:
-                    newS = 0
-                timeString = str(newH).zfill(2) + ":" + str(newM).zfill(2) + ":" + str(newS).zfill(2)
-                secToday = 3600 * newH + 60 * newM + newS
+                    new_seconds = 0
+                time_string = str(new_hour).zfill(2) + ":" + str(new_minutes).zfill(2) + ":" + str(new_seconds).zfill(2)
+                seconds_today = 3600 * new_hour + 60 * new_minutes + new_seconds
                 # ______________________________________________ gleiche Zeit?
-                if secToday == backup0:
+                if seconds_today == backup0:
                     print(str(self.__changeNr) + " nicht geändert ?!")
                 else:
                     #
-                    oldTime = row[1]
-                    self.__db.updateDataByNumber(
+                    old_time = row[1]
+                    self.__db.update_data_by_number(
                         self.__changeNr,
-                        timeString,
-                        newH,
-                        newM,
-                        newS,
-                        secToday,
+                        time_string,
+                        new_hour,
+                        new_minutes,
+                        new_seconds,
+                        seconds_today,
                         backup0,
                         backup1,
-                        oldTime,
+                        old_time,
                         "Change time of",
                     )
                     print(str(self.__changeNr) + " wurde geändert")
             # ---
-            myOLD = "nichts mehr gewählt, zuletzt: " + str(self.__changeNr)
-            self.__ui.config("window.lblChangeStatus", text=myOLD)
+            old_data = "nichts mehr gewählt, zuletzt: " + str(self.__changeNr)
+            self.__ui.config("window.lblChangeStatus", text=old_data)
             # -- clear change Nr
             self.__changeNr = None
             # ---
             self.__ui.clear("window.editH")
             self.__ui.clear("window.editM")
             self.__ui.clear("window.editS")
-            TRZtext = "Change with List"
-            self.__ui.config("window.lblChangeText", text=TRZtext)
+            trz_text = "Change with List"
+            self.__ui.config("window.lblChangeText", text=trz_text)
             # Update, da sonst verunsichernd:
-            self.refeshList()
+            self.refresh_list()
 
     # ========================================================================
-    def deleteTime(self):
-        """
-        Delete time entry in database
-        """
+    def delete_time(self):
+        """Delete the time entry in the database."""
         if self.__changeNr is not None:
-            self.__db.deleteDataByNumber(self.__changeNr)
+            self.__db.delete_data_by_number(self.__changeNr)
             # ---
-            myOLD = "nichts mehr gewählt, zuletzt: " + str(self.__changeNr)
-            self.__ui.config("window.lblChangeStatus", text=myOLD)
+            old_data = "nichts mehr gewählt, zuletzt: " + str(self.__changeNr)
+            self.__ui.config("window.lblChangeStatus", text=old_data)
             # -- clear change Nr
             self.__changeNr = None
             # ---
             self.__ui.clear("window.editH")
             self.__ui.clear("window.editM")
             self.__ui.clear("window.editS")
-            TRZtext = "Change with List"
-            self.__ui.config("window.lblChangeText", text=TRZtext)
+            trz_text = "Change with List"
+            self.__ui.config("window.lblChangeText", text=trz_text)
             # Update, da sonst verunsichernd:
-            self.refeshList()
+            self.refresh_list()
 
     # == FTP ======================================================================
-    def writeLocalTrzFile(self):
+    def write_local_trz_file(self):
         """Schreibe die TRZ-Datei lokal und melde das Ergebnis dem Benutzer."""
-        fileName = self.__config.get("data.TRZFile")
-        if self.__writeTrzFile(fileName):
-            messagebox.showinfo(title="TRZ File", message=f"TRZ File '{fileName}' geschrieben.")
+        file_name = self.__config.get("data.TRZFile")
+        if self.__write_trz_file(file_name):
+            messagebox.showinfo(title="TRZ File", message=f"TRZ File '{file_name}' geschrieben.")
         else:
             messagebox.showerror(
-                title="TRZ File", message=f"TRZ File '{fileName}' konnte nicht lokal geschrieben werden."
+                title="TRZ File", message=f"TRZ File '{file_name}' konnte nicht lokal geschrieben werden."
             )
 
-    def sendFile(self):
+    def send_file(self):
         """Schreibe die TRZ-Datei und übertrage sie zusammen mit der Datenbank per FTP."""
-        fileName = self.__config.get("data.TRZFile")
-        dbName = self.__config.get("data.SQLiteFile")
-        if self.__writeTrzFile(fileName):
-            if self.__transport and self.__transport.sendFile([fileName, dbName]):
-                messagebox.showinfo(title="TRZ File", message=f"TRZ File '{fileName}' erfolgreich übertragen.")
+        file_name = self.__config.get("data.TRZFile")
+        db_name = self.__config.get("data.SQLiteFile")
+        if self.__write_trz_file(file_name):
+            if self.__transport and self.__transport.send_file([file_name, db_name]):
+                messagebox.showinfo(title="TRZ File", message=f"TRZ File '{file_name}' erfolgreich übertragen.")
             else:
-                messagebox.showerror(title="TRZ File", message=f"TRZ File '{fileName}' nicht übertragen.")
+                messagebox.showerror(title="TRZ File", message=f"TRZ File '{file_name}' nicht übertragen.")
         else:
             messagebox.showerror(
-                title="TRZ File", message=f"TRZ File '{fileName}' konnte nicht lokal geschrieben werden."
+                title="TRZ File", message=f"TRZ File '{file_name}' konnte nicht lokal geschrieben werden."
             )
 
-    def __writeTrzFile(self, fileName: str) -> bool:
+    def __write_trz_file(self, file_name: str) -> bool:
         # print("would now write fo file")
         try:
-            with open(fileName, "w") as file:
-                data = self.__db.getAllData()
-                for satz in data:
-                    file.write(f"{str(satz[0]).zfill(4)}\t{satz[1]}\n")
+            with Path(file_name).open("w") as file:
+                data = self.__db.get_all_data()
+                for entry in data:
+                    file.write(f"{str(entry[0]).zfill(4)}\t{entry[1]}\n")
                 file.close()
                 return True
         except Exception:

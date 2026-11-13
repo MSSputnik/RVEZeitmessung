@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""
-Created on 18.3.2023
+"""Database access for RVE Zeitmessung.
+
+Created on 18.3.2023.
 @author: Dr. Ulf Meerwald, Martin Schmidt
 """
 
@@ -11,28 +12,26 @@ from . import RveZeitConfig
 
 
 class DB:
-    """
-    Class to handle database calls
-    """
+    """Class to handle database calls."""
 
     __dbConnection = None
     __dbCursor = None
 
     def __init__(self, config: RveZeitConfig):
         # Existenz feststellen
-        sqliteFile = config.get("data.SQLiteFile")
-        print(f"Initialize Database {sqliteFile}")
-        if sqliteFile:
-            if os.path.exists(sqliteFile):
+        sqlite_file = config.get("data.SQLiteFile")
+        print(f"Initialize Database {sqlite_file}")
+        if sqlite_file:
+            if os.path.exists(sqlite_file):
                 # Verbindung zur Datenbank erzeugen
-                self.__dbConnection = sqlite3.connect(sqliteFile)
+                self.__dbConnection = sqlite3.connect(sqlite_file)
                 # Datensatzcursor erzeugen
                 self.__dbCursor = self.__dbConnection.cursor()
 
                 print("Datenbank war bereits vorhanden.")
             else:
                 # Verbindung zur Datenbank erzeugen
-                self.__dbConnection = sqlite3.connect(sqliteFile)
+                self.__dbConnection = sqlite3.connect(sqlite_file)
                 # Datensatzcursor erzeugen
                 self.__dbCursor = self.__dbConnection.cursor()
 
@@ -74,39 +73,33 @@ class DB:
         if self.__dbConnection:
             self.__dbConnection.close()
 
-    def getMaxMeta(self) -> int:
-        """
-        Get index for Meta
-        """
-        metaX = 0
+    def get_max_meta(self) -> int:
+        """Get index for Meta."""
+        meta_x = 0
         if self.__dbCursor:
             sql = "SELECT MAX(nummer) FROM meta"
             self.__dbCursor.execute(sql)
-            metaX = self.__dbCursor.fetchone()[0]
-            if metaX is None:
-                metaX = 0
+            meta_x = self.__dbCursor.fetchone()[0]
+            if meta_x is None:
+                meta_x = 0
 
-        print(f"MetaX: {metaX}")
-        return metaX
+        print(f"MetaX: {meta_x}")
+        return meta_x
 
-    def getMaxNumber(self) -> int:
-        """
-        Highest number for default field 1
-        """
-        maxNumber = 0
+    def get_max_number(self) -> int:
+        """Highest number for default field 1."""
+        max_number = 0
         if self.__dbCursor:
             sql = "SELECT MAX(nummer) FROM zeiten"
             self.__dbCursor.execute(sql)
-            maxNumber = self.__dbCursor.fetchone()[0]
-            if maxNumber is None:
-                maxNumber = 0
+            max_number = self.__dbCursor.fetchone()[0]
+            if max_number is None:
+                max_number = 0
 
-        return maxNumber
+        return max_number
 
-    def getDataByNumber(self, nummer: str) -> int:
-        """
-        Get db entry by number
-        """
+    def get_data_by_number(self, nummer: str) -> int:
+        """Get db entry by number."""
         row = None
         if self.__dbCursor and nummer is not None and nummer != "":
             sql = f"SELECT * FROM zeiten WHERE nummer = {nummer}"
@@ -114,7 +107,7 @@ class DB:
             row = self.__dbCursor.fetchone()
         return row
 
-    def insertDataByNumber(
+    def insert_data_by_number(
         self,
         nummer: str,
         timeString: str,
@@ -125,9 +118,7 @@ class DB:
         backup1: int = 0,
         backup2: int = 0,
     ):
-        """
-        Create new zeiten entry
-        """
+        """Create new zeiten entry."""
         if self.__dbCursor and nummer is not None and nummer != "":
             sql = (
                 "INSERT INTO zeiten "
@@ -139,7 +130,7 @@ class DB:
             self.__dbCursor.execute(sql)
             self.__dbConnection.commit()
 
-    def updateDataByNumber(
+    def update_data_by_number(
         self,
         nummer: str,
         timeString: str,
@@ -152,9 +143,7 @@ class DB:
         oldSecToday: int = 0,
         comment: str = "New time for",
     ):
-        """
-        Update new zeiten entry
-        """
+        """Update new zeiten entry."""
         if self.__dbCursor and nummer is not None and nummer != "":
             sql = (
                 "UPDATE zeiten SET "
@@ -177,7 +166,7 @@ class DB:
             self.__dbCursor.execute(sql)
             self.__dbConnection.commit()
 
-    def upsertDataByNumber(
+    def upsert_data_by_number(
         self,
         nummer: str,
         timeString: str,
@@ -188,14 +177,12 @@ class DB:
         backup1: int = 0,
         backup2: int = 0,
     ):
-        """
-        Insert or update data entry depending if number already exists in database.
-        """
-        row = self.getDataByNumber(nummer)
+        """Insert or update data entry depending if number already exists in database."""
+        row = self.get_data_by_number(nummer)
         if row is None:
-            self.insertDataByNumber(nummer, timeString, hour, minuten, sekunden, secToday)
+            self.insert_data_by_number(nummer, timeString, hour, minuten, sekunden, secToday)
         else:
-            self.updateDataByNumber(
+            self.update_data_by_number(
                 nummer,
                 timeString,
                 hour,
@@ -207,10 +194,8 @@ class DB:
                 oldSecToday=row[1],
             )
 
-    def deleteDataByNumber(self, nummer: str):
-        """
-        Delete data entry from database
-        """
+    def delete_data_by_number(self, nummer: str):
+        """Delete data entry from database."""
         if self.__dbCursor and nummer is not None and nummer != "":
             sql1 = f"delete from meta where int = {nummer!s}"
             sql2 = f"delete from zeiten where nummer =  {nummer!s}"
@@ -218,10 +203,8 @@ class DB:
             self.__dbCursor.execute(sql2)
             self.__dbConnection.commit()
 
-    def getAllData(self) -> list:
-        """
-        Get alle zeiten einträge
-        """
+    def get_all_data(self) -> list:
+        """Get alle zeiten einträge."""
         result = []
         if self.__dbCursor:
             sql = "SELECT * FROM zeiten ORDER BY secToday desc"

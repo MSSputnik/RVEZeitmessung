@@ -23,9 +23,9 @@ class UI:
         print("Init UI")
         self.__config = config
         if self.__config is not None:
-            self.__createWindow()
+            self.__create_window()
 
-    def __createWindow(self):
+    def __create_window(self):
         self.__UIElements[self.__baseName] = window = tk.Tk()
 
         # integer validation
@@ -33,24 +33,24 @@ class UI:
         self.__validationHour = window.register(self.__only_hours)
         self.__validationMinute = window.register(self.__only_minutes)
 
-        val = self.__config.getUI("title")
+        val = self.__config.get_ui("title")
         if val:
             window.title(val)
-        val = self.__config.getUI("geometry")
+        val = self.__config.get_ui("geometry")
         if val:
             window.geometry(val)
-        val = self.__config.getUI("resizable")
+        val = self.__config.get_ui("resizable")
         if val:
             window.resizable(**val)
-        val = self.__config.getUI("uiElements")
+        val = self.__config.get_ui("uiElements")
         if val:
             for element in val:
-                self.__addUIElement("window", element)
-        val = self.__config.getUI("menu")
+                self.__add_ui_element("window", element)
+        val = self.__config.get_ui("menu")
         if val:
-            self.__addMenu("window", val)
+            self.__add_menu("window", val)
 
-    def __addMenu(self, base: str, element: dict):
+    def __add_menu(self, base: str, element: dict):
         """
         Add Manin Menu to Window.
         Calls creation of all subsequent elements in the menu tree
@@ -59,17 +59,17 @@ class UI:
         if base and base in self.__UIElements and element:
             parent = self.__UIElements[base]
             if "name" in element:
-                elementName = f"{base}.{element['name']}"
+                element_name = f"{base}.{element['name']}"
                 properties = {}
                 if "properties" in element:
                     properties = element["properties"]
-                self.__UIElements[elementName] = tk.Menu(parent, **properties)
-                parent.config(menu=self.__UIElements[elementName])
+                self.__UIElements[element_name] = tk.Menu(parent, **properties)
+                parent.config(menu=self.__UIElements[element_name])
                 if "elements" in element:
-                    for subElement in element["elements"]:
-                        self.__addMenuElement(elementName, subElement)
+                    for sub_element in element["elements"]:
+                        self.__add_menu_element(element_name, sub_element)
 
-    def __addMenuElement(self, base: str, element: dict):
+    def __add_menu_element(self, base: str, element: dict):
         """
         Add a menu element
         """
@@ -77,26 +77,26 @@ class UI:
         if base and base in self.__UIElements and element:
             parent = self.__UIElements[base]
             if "name" in element and "type" in element:
-                elementName = f"{base}.{element['name']}"
+                element_name = f"{base}.{element['name']}"
                 properties = {}
                 if "properties" in element:
                     properties = element["properties"]
-                menuProperties = {}
+                menu_properties = {}
                 if "menuProperties" in element:
-                    menuProperties = element["menuProperties"]
+                    menu_properties = element["menuProperties"]
                 type = element["type"].lower()
                 if type == "cascade":
-                    self.__addSubMenu(parent, elementName, properties, menuProperties)
+                    self.__add_sub_menu(parent, element_name, properties, menu_properties)
                 if type == "separator":
                     parent.add_separator()
                 if type == "command":
                     parent.add_command(**properties)
 
                 if "elements" in element:
-                    for subElement in element["elements"]:
-                        self.__addMenuElement(elementName, subElement)
+                    for sub_element in element["elements"]:
+                        self.__add_menu_element(element_name, sub_element)
 
-    def __addSubMenu(self, parent, name: str, properties: dict = {}, menuProperties: dict = {}):
+    def __add_sub_menu(self, parent, name: str, properties: dict = {}, menuProperties: dict = {}):
         """
         Add an sub menu
         """
@@ -104,12 +104,12 @@ class UI:
         self.__UIElements[name] = tk.Menu(parent, **menuProperties)
         parent.add_cascade(menu=self.__UIElements[name], **properties)
 
-    def __addUIElement(self, base: str, element: dict):
+    def __add_ui_element(self, base: str, element: dict):
         # print(f"Add to {base} new UI Element: {element}")
         if base and base in self.__UIElements and element:
             parent = self.__UIElements[base]
             if "name" in element and "type" in element:
-                elementName = f"{base}.{element['name']}"
+                element_name = f"{base}.{element['name']}"
                 properties = {}
                 if "properties" in element:
                     properties = element["properties"]
@@ -124,25 +124,25 @@ class UI:
                     validation = element["validation"]
 
                 if element["type"].lower() == "label":
-                    self.__addLabel(parent, elementName, properties, placement, pack)
+                    self.__add_label(parent, element_name, properties, placement, pack)
                 if element["type"].lower() == "entry":
-                    self.__addEntry(parent, elementName, properties, placement, pack, validation)
+                    self.__add_entry(parent, element_name, properties, placement, pack, validation)
                 if element["type"].lower() == "button":
-                    self.__addButton(parent, elementName, properties, placement, pack)
+                    self.__add_button(parent, element_name, properties, placement, pack)
                 if element["type"].lower() == "frame":
-                    self.__addFrame(parent, elementName, properties, placement, pack)
+                    self.__add_frame(parent, element_name, properties, placement, pack)
                 if element["type"].lower() == "scrollbar":
-                    self.__addScrollbar(parent, elementName, properties, placement, pack)
+                    self.__add_scrollbar(parent, element_name, properties, placement, pack)
                 if element["type"].lower() == "listbox":
-                    self.__addListbox(parent, elementName, properties, placement, pack)
+                    self.__add_listbox(parent, element_name, properties, placement, pack)
                 if element["type"].lower() == "radiobutton":
-                    self.__addRadioButton(parent, elementName, properties, placement, pack)
+                    self.__add_radio_button(parent, element_name, properties, placement, pack)
 
                 if "uiElements" in element:
-                    for subElement in element["uiElements"]:
-                        self.__addUIElement(elementName, subElement)
+                    for sub_element in element["uiElements"]:
+                        self.__add_ui_element(element_name, sub_element)
 
-    def __addLabel(self, parent, name: str, properties: dict = {}, placement: dict = {}, pack: dict = {}):
+    def __add_label(self, parent, name: str, properties: dict = {}, placement: dict = {}, pack: dict = {}):
         """
         Add an label
         """
@@ -153,7 +153,7 @@ class UI:
         if pack:
             self.__UIElements[name].pack(cnf=pack)
 
-    def __addEntry(
+    def __add_entry(
         self, parent, name: str, properties: dict = {}, placement: dict = {}, pack: dict = {}, validation: dict = {}
     ):
         """
@@ -166,23 +166,23 @@ class UI:
         if pack:
             self.__UIElements[name].pack(cnf=pack)
         if validation:
-            maxLength = 0
+            max_length = 0
             if "length" in validation:
-                maxLength = validation["length"]
+                max_length = validation["length"]
             if "type" in validation:
-                validationType = validation["type"]
-                if validationType.lower() == "integer":
+                validation_type = validation["type"]
+                if validation_type.lower() == "integer":
                     self.__UIElements[name].config(
-                        validate="key", validatecommand=(self.__validationInteger, "%S", "%P", maxLength)
+                        validate="key", validatecommand=(self.__validationInteger, "%S", "%P", max_length)
                     )
-                if validationType.lower() == "hour":
+                if validation_type.lower() == "hour":
                     self.__UIElements[name].config(validate="key", validatecommand=(self.__validationHour, "%S", "%P"))
-                if validationType.lower() == "minute":
+                if validation_type.lower() == "minute":
                     self.__UIElements[name].config(
                         validate="key", validatecommand=(self.__validationMinute, "%S", "%P")
                     )
 
-    def __addButton(self, parent, name: str, properties: dict = {}, placement: dict = {}, pack: dict = {}):
+    def __add_button(self, parent, name: str, properties: dict = {}, placement: dict = {}, pack: dict = {}):
         """
         Add an button
         """
@@ -193,7 +193,7 @@ class UI:
         if pack:
             self.__UIElements[name].pack(cnf=pack)
 
-    def __addRadioButton(self, parent, name: str, properties: dict = {}, placement: dict = {}, pack: dict = {}):
+    def __add_radio_button(self, parent, name: str, properties: dict = {}, placement: dict = {}, pack: dict = {}):
         """
         Add an radio button
         """
@@ -204,7 +204,7 @@ class UI:
         if pack:
             self.__UIElements[name].pack(cnf=pack)
 
-    def __addFrame(self, parent, name: str, properties: dict = {}, placement: dict = {}, pack: dict = {}):
+    def __add_frame(self, parent, name: str, properties: dict = {}, placement: dict = {}, pack: dict = {}):
         """
         Add an frame
         """
@@ -215,7 +215,7 @@ class UI:
         if pack:
             self.__UIElements[name].pack(cnf=pack)
 
-    def __addScrollbar(self, parent, name: str, properties: dict = {}, placement: dict = {}, pack: dict = {}):
+    def __add_scrollbar(self, parent, name: str, properties: dict = {}, placement: dict = {}, pack: dict = {}):
         """
         Add an scrollbar
         """
@@ -226,7 +226,7 @@ class UI:
         if pack:
             self.__UIElements[name].pack(cnf=pack)
 
-    def __addListbox(self, parent, name: str, properties: dict = {}, placement: dict = {}, pack: dict = {}):
+    def __add_listbox(self, parent, name: str, properties: dict = {}, placement: dict = {}, pack: dict = {}):
         """
         Add an listbox
         """
@@ -270,7 +270,7 @@ class UI:
         except Exception:
             return False
 
-    def getWidget(self, name: str):
+    def get_widget(self, name: str):
         """Gib das UI-Widget mit dem angegebenen Namen zurück."""
         if name and name in self.__UIElements:
             return self.__UIElements[name]
@@ -321,7 +321,7 @@ class UI:
             self.clear(name)
             self.insert(name, 0, value)
 
-    def getValue(self, name: str) -> str:
+    def get_value(self, name: str) -> str:
         """Gib den aktuellen Wert des benannten Widgets zurück."""
         # print(f"Get value from {name}")
         if name in self.__UIElements:
@@ -337,10 +337,10 @@ class UI:
     def curselection(self, name: str) -> str:
         """Gib den aktuell ausgewählten Eintrag des benannten Widgets zurück."""
         # print(f"Curselection for {name}")
-        lineText = None
+        line_text = None
         if name in self.__UIElements:
-            lineText = self.__UIElements[name].get("anchor")
-        return lineText
+            line_text = self.__UIElements[name].get("anchor")
+        return line_text
 
     def __str__(self):
         result = []

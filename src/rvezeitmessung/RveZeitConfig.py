@@ -65,7 +65,7 @@ class Config:
         # Load configuration from .ini file
         self.__load_config_from_ini()
 
-        # set parameter which are only nown after loading from .ini file
+        # set parameter which are only known after loading from .ini file
         self.__config_data["data"]["TRZFile"] = f"{self.__config_data['data']['Position']}.trz"
         self.__config_data["data"]["SQLiteFile"] = f"{self.__config_data['data']['Position']}.db"
 
@@ -215,7 +215,10 @@ class Config:
             }
         )
         keys = ["s", "d", "f"]
+        offset = 0
         for number in range(0, self.get("data.InputGroups")):
+            if number > 0:
+                offset = 30
             self.__ui_design["uiElements"].append(
                 {
                     "name": f"text{number + 1}",
@@ -223,16 +226,35 @@ class Config:
                     "description": f"text entry {number + 1}",
                     "validation": {"type": "integer", "length": 4},
                     "properties": {"font": ("Hack", 26)},
-                    "placement": {"x": 10 + 210 * number, "y": 35, "width": 85, "height": 60},
+                    "placement": {"x": 10 + 210 * number + offset, "y": 35, "width": 85, "height": 60},
                 }
             )
+            if number == 0:
+                self.__ui_design["uiElements"].append(
+                    {
+                        "name": f"btnUp{number + 1}",
+                        "type": "button",
+                        "description": f"button increment text number {number + 1}",
+                        "properties": {"text": "▲"},
+                        "placement": {"x": 100 + 210 * number, "y": 35, "width": 26, "height": 30},
+                    }
+                )
+                self.__ui_design["uiElements"].append(
+                    {
+                        "name": f"btnDown{number + 1}",
+                        "type": "button",
+                        "description": f"button decrement text number {number + 1}",
+                        "properties": {"text": "▼"},
+                        "placement": {"x": 100 + 210 * number, "y": 65, "width": 26, "height": 30},
+                    }
+                )
             self.__ui_design["uiElements"].append(
                 {
                     "name": f"btnCheck{number + 1}",
                     "type": "button",
                     "description": f"button check for text entry {number + 1}",
                     "properties": {"text": "Check"},
-                    "placement": {"x": 100 + 210 * number, "y": 35, "width": 90, "height": 30},
+                    "placement": {"x": 130 + 210 * number, "y": 35, "width": 90, "height": 30},
                 }
             )
             self.__ui_design["uiElements"].append(
@@ -241,7 +263,7 @@ class Config:
                     "type": "button",
                     "description": f"button commit for text entry {number + 1}",
                     "properties": {"text": f"Zeitnahme ({keys[number]})"},
-                    "placement": {"x": 100 + 210 * number, "y": 65, "width": 90, "height": 30},
+                    "placement": {"x": 130 + 210 * number, "y": 65, "width": 90, "height": 30},
                 }
             )
         self.__ui_design["uiElements"].append(
@@ -342,7 +364,7 @@ class Config:
                 "name": "btnTransfer",
                 "type": "button",
                 "description": "button start ftp transfer",
-                "properties": {"text": "FTP Transfer"},
+                "properties": {"text": "FTP Transfer", "underline": 4},
                 "placement": {"x": 10, "y": 315, "width": 100, "height": 30},
             }
         )
@@ -387,7 +409,7 @@ class Config:
         """Return the configuration as a JSON formatted string."""
         return json.dumps(self.__config_data, indent=2)
 
-    def get(self, prop: str, default: Any = None) -> any:
+    def get(self, prop: str, default: Any = None) -> Any:
         """Get the property value.
 
         Separate level with `.`. e.g. Application Version: app.version

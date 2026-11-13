@@ -67,6 +67,8 @@ class App:
             ui.insert("window.text1", 0, str(max_number + 1))
         ui.config("window.btnCheck1", command=self.check_1)
         ui.config("window.btnCommit1", command=self.zeit_of1)
+        ui.config("window.btnUp1", command=self.number_up)
+        ui.config("window.btnDown1", command=self.number_down)
         ui.config("window.btnCheck2", command=self.check_2)
         ui.config("window.btnCommit2", command=self.zeit_of2)
         ui.config("window.btnCheck3", command=self.check_3)
@@ -85,6 +87,8 @@ class App:
         ui.bind("window.text1", "<Return>", lambda event: self.zeit_of1())
         ui.bind("window.text2", "<Return>", lambda event: self.zeit_of2())
         ui.bind("window.text3", "<Return>", lambda event: self.zeit_of3())
+        ui.bind("window", "<Up>", lambda event: self.number_up())
+        ui.bind("window", "<Down>", lambda event: self.number_down())
         ui.bind("window", "q", lambda event: self.exit())
         ui.bind("window", "a", lambda event: self.show_about())
         ui.bind("window", "t", lambda event: self.send_file())
@@ -147,6 +151,25 @@ class App:
             else:
                 self.__ui.config(f"window.btnCommit{number}", style=self.__styles["redButton"])
                 self.__ui.config(f"window.text{number}", style=self.__styles["redEntry"])
+
+    # ========================================================================
+    def number_up(self):
+        """Erhöhe die Startnummer im ersten Eingabefeld um eins."""
+        self.__change_number(1)
+
+    def number_down(self):
+        """Verringere die Startnummer im ersten Eingabefeld um eins."""
+        self.__change_number(-1)
+
+    def __change_number(self, delta: int):
+        """Ändere die Startnummer im ersten Eingabefeld um den angegebenen Wert."""
+        value = self.__ui.get_value("window.text1")
+        try:
+            number = int(value)
+        except (TypeError, ValueError):
+            number = 0
+        number = max(0, number + delta)
+        self.__ui.replace("window.text1", str(number))
 
     # ============================================================================================
     def zeit_of1(self):

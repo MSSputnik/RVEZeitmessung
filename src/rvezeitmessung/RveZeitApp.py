@@ -1,25 +1,21 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on 18.3.2023
 @author: Dr. Ulf Meerwald, Martin Schmidt
 """
 
-import RveZeitConfig
-import RveZeitUI
-import RveZeitDB
-import RveZeitFtp
-
-import time
 import math
+import time
 import tkinter as tk
 from tkinter import messagebox, ttk
+
+from . import RveZeitConfig, RveZeitDB, RveZeitFtp, RveZeitUI
 
 
 class App:
     """
     This class contains the actual application code
     """
+
     __config: RveZeitConfig = None
     __ui: RveZeitUI = None
     __changeNr = None
@@ -38,20 +34,20 @@ class App:
         maxNumber = db.getMaxNumber()
 
         # Create Styles
-        green = '#109410'
-        red = '#ba1c1c'
-        ttk.Style().configure('green.TButton', foreground=green)
-        ttk.Style().configure('red.TButton', foreground=red)
-        ttk.Style().configure('green.TEntry', foreground=green)
-        ttk.Style().configure('red.TEntry', foreground=red)
+        green = "#109410"
+        red = "#ba1c1c"
+        ttk.Style().configure("green.TButton", foreground=green)
+        ttk.Style().configure("red.TButton", foreground=red)
+        ttk.Style().configure("green.TEntry", foreground=green)
+        ttk.Style().configure("red.TEntry", foreground=red)
 
         self.__styles = {
-            "defaultButton": 'TButton',
-            "greenButton": 'green.TButton',
-            "redButton": 'red.TButton',
-            "defaultEntry": 'TEntry',
-            "greenEntry": 'green.TEntry',
-            "redEntry": 'red.TEntry'
+            "defaultButton": "TButton",
+            "greenButton": "green.TButton",
+            "redButton": "red.TButton",
+            "defaultEntry": "TEntry",
+            "greenEntry": "green.TEntry",
+            "redEntry": "red.TEntry",
         }
 
         # activate menues
@@ -68,7 +64,7 @@ class App:
 
         # activate buttons etc
         if self.__config.get("data.AutoIncrement"):
-            ui.insert("window.text1", 0, str(maxNumber+1))
+            ui.insert("window.text1", 0, str(maxNumber + 1))
         ui.config("window.btnCheck1", command=self.check_1)
         ui.config("window.btnCommit1", command=self.zeitOf1)
         ui.config("window.btnCheck2", command=self.check_2)
@@ -113,6 +109,7 @@ class App:
             self.__autoValue.set(0)
 
     def start(self):
+        """Starte die Anwendung und die laufende Uhranzeige."""
         self.__clocktime()
 
     def __clocktime(self):
@@ -120,7 +117,7 @@ class App:
         This function is used to
         display time on the label
         """
-        string = time.strftime('%H:%M:%S')
+        string = time.strftime("%H:%M:%S")
         self.__ui.config("window.lblClock", text=string)
         self.__ui.after("window.lblClock", 500, self.__clocktime)
 
@@ -134,12 +131,15 @@ class App:
 
     # ========================================================================
     def check_1(self):
+        """Prüfe die Startnummer im ersten Eingabefeld."""
         self.__checkNumber(1)
 
     def check_2(self):
+        """Prüfe die Startnummer im zweiten Eingabefeld."""
         self.__checkNumber(2)
 
     def check_3(self):
+        """Prüfe die Startnummer im dritten Eingabefeld."""
         self.__checkNumber(3)
 
     def __checkNumber(self, nummer: int):
@@ -155,27 +155,30 @@ class App:
 
     # ============================================================================================
     def zeitOf1(self):
+        """Speichere die Zeit für das erste Eingabefeld."""
         self.__speichereZeit(1)
 
     def zeitOf2(self):
+        """Speichere die Zeit für das zweite Eingabefeld."""
         self.__speichereZeit(2)
 
     def zeitOf3(self):
+        """Speichere die Zeit für das dritte Eingabefeld."""
         self.__speichereZeit(3)
 
     def __speichereZeit(self, nummer: int):
         """
-        speichert die Bootsnummer und die aktuelle Zeit in der Datenbank.
+        Speichert die Bootsnummer und die aktuelle Zeit in der Datenbank.
         """
         jetzt = time.localtime()
         timeString = str(jetzt.tm_hour).zfill(2) + ":" + str(jetzt.tm_min).zfill(2) + ":" + str(jetzt.tm_sec).zfill(2)
-        secToday = 3600*jetzt.tm_hour + 60*jetzt.tm_min + jetzt.tm_sec
+        secToday = 3600 * jetzt.tm_hour + 60 * jetzt.tm_min + jetzt.tm_sec
         nostr = self.__ui.getValue(f"window.text{nummer}")
-        if not nostr is None and len(nostr) > 0:
+        if nostr is not None and len(nostr) > 0:
             self.__db.upsertDataByNumber(nostr, timeString, jetzt.tm_hour, jetzt.tm_min, jetzt.tm_sec, secToday)
 
             if self.__config.get("data.AutoIncrement"):
-                self.__ui.replace(f"window.text{nummer}", str(int(nostr)+1))
+                self.__ui.replace(f"window.text{nummer}", str(int(nostr) + 1))
             else:
                 self.__ui.clear(f"window.text{nummer}")
 
@@ -231,7 +234,7 @@ class App:
                         oldM = math.floor((row[7] - 3600 * oldH) / 60)
                         oldS = row[7] - 3600 * oldH - 60 * oldM
                         myOLD = myOLD + " und " + str(oldH).zfill(2) + ":" + str(oldM).zfill(2)
-                        + ":" + str(oldS).zfill(2)
+                        +":" + str(oldS).zfill(2)
                     myOLD = myOLD + ")"
                 else:
                     myOLD = myOLD + " <=  alte Zeit"
@@ -270,8 +273,18 @@ class App:
                 else:
                     #
                     oldTime = row[1]
-                    self.__db.updateDataByNumber(self.__changeNr, timeString, newH, newM, newS, secToday,
-                                                 backup0, backup1, oldTime, "Change time of")
+                    self.__db.updateDataByNumber(
+                        self.__changeNr,
+                        timeString,
+                        newH,
+                        newM,
+                        newS,
+                        secToday,
+                        backup0,
+                        backup1,
+                        oldTime,
+                        "Change time of",
+                    )
                     print(str(self.__changeNr) + " wurde geändert")
             # ---
             myOLD = "nichts mehr gewählt, zuletzt: " + str(self.__changeNr)
@@ -310,14 +323,17 @@ class App:
 
     # == FTP ======================================================================
     def writeLocalTrzFile(self):
+        """Schreibe die TRZ-Datei lokal und melde das Ergebnis dem Benutzer."""
         fileName = self.__config.get("data.TRZFile")
         if self.__writeTrzFile(fileName):
             messagebox.showinfo(title="TRZ File", message=f"TRZ File '{fileName}' geschrieben.")
         else:
-            messagebox.showerror(title="TRZ File",
-                                 message=f"TRZ File '{fileName}' konnte nicht lokal geschrieben werden.")
+            messagebox.showerror(
+                title="TRZ File", message=f"TRZ File '{fileName}' konnte nicht lokal geschrieben werden."
+            )
 
     def sendFile(self):
+        """Schreibe die TRZ-Datei und übertrage sie zusammen mit der Datenbank per FTP."""
         fileName = self.__config.get("data.TRZFile")
         dbName = self.__config.get("data.SQLiteFile")
         if self.__writeTrzFile(fileName):
@@ -326,8 +342,9 @@ class App:
             else:
                 messagebox.showerror(title="TRZ File", message=f"TRZ File '{fileName}' nicht übertragen.")
         else:
-            messagebox.showerror(title="TRZ File",
-                                 message=f"TRZ File '{fileName}' konnte nicht lokal geschrieben werden.")
+            messagebox.showerror(
+                title="TRZ File", message=f"TRZ File '{fileName}' konnte nicht lokal geschrieben werden."
+            )
 
     def __writeTrzFile(self, fileName: str) -> bool:
         # print("would now write fo file")
@@ -343,8 +360,10 @@ class App:
 
     # -=== Menu Handler
     def exit(self):
-        if messagebox.askyesno('Verify', 'Really quit?'):
+        """Frage den Benutzer um Bestätigung und beende die Anwendung."""
+        if messagebox.askyesno("Verify", "Really quit?"):
             self.__ui.exit()
 
     def show_about(self):
+        """Zeige den Info-Dialog mit der Anwendungsversion an."""
         messagebox.showinfo("About", f"RVEZeitmessung\n{self.__config.get('app.version')}")

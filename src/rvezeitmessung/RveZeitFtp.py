@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on 18.3.2023
 @author: Dr. Ulf Meerwald, Martin Schmidt
 """
+
 # ftp export
 import ftplib
 
-import RveZeitConfig
+from . import RveZeitConfig
 
 
 class FTP:
@@ -22,7 +22,7 @@ class FTP:
 
     def sendFile(self, files: list) -> bool:
         """
-        send given files via FTP
+        Send given files via FTP
         """
         print(f"Send {files} via FTP")
         result = False
@@ -39,9 +39,9 @@ class FTP:
                 result = True
                 for file in files:
                     try:
-                        with open(file, 'rb') as fp:                        # file to send
-                            session.storbinary('STOR ' + file, fp)          # send the file
-                            fp.close()                                      # close file and FTP
+                        with open(file, "rb") as fp:  # file to send
+                            session.storbinary("STOR " + file, fp)  # send the file
+                            fp.close()  # close file and FTP
                     except Exception:
                         result = False
                 session.quit()

@@ -1,18 +1,16 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
+Aufruf des Programms.
+
 Created on 18.3.2023
 @author: Dr. Ulf Meerwald, Martin Schmidt
 """
 
-import RveZeitConfig
-import RveZeitDB
-import RveZeitApp
-import RveZeitUI
-import RveZeitFtp
+from . import RveZeitApp, RveZeitConfig, RveZeitDB, RveZeitFtp, RveZeitUI
 
 
 def main():
+    """Initialisiere Konfiguration, Komponenten und starte die Anwendung."""
     config = RveZeitConfig.Config()
 
     print(f"RVE Zeit - {config.get('app.version')}")

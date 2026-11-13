@@ -1,0 +1,75 @@
+[project]
+name = "rvezeitmessung"
+version = "0.1.0"
+description = "Anwendung zur Zeitmessung bei der RVE Langstrecke"
+readme = "README.md"
+authors = [
+    { name = "Martin Schmidt", email = "martin.schmidt@skaylink.com" }
+]
+requires-python = ">=3.13"
+dependencies = []
+
+[project.scripts]
+rvezeitmessung = "rvezeitmessung.main:main"
+
+[build-system]
+requires = ["uv_build>=0.13.6,<0.14.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "rvezeitmessung"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.0",
+    "ruff>=0.17.3",
+    "ty>=0.0.97",
+]
+
+[tool.uv]
+required-environments = [
+    "sys_platform == 'linux' and platform_machine == 'x86_64'",
+    "sys_platform == 'darwin' and platform_machine == 'arm64'",
+    "sys_platform == 'win32' and platform_machine == 'AMD64'",
+]
+
+[tool.pytest.ini_options]
+# Discover tests under tests/; keep output concise.
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.ruff]
+# Max line length (maps to ruff formatter + the E501 lint rule).
+line-length = 120
+target-version = "py313"
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors (includes E501 line-too-long)
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes (undefined names, unused imports/vars)
+    "I",    # isort - sorted imports
+    "D",    # pydocstyle - docstring checks (NumPy convention, set below)
+    "N",    # pep8-naming
+    "UP",   # pyupgrade - keep syntax modern for the target version
+    "B",    # flake8-bugbear - likely bugs and dangerous patterns
+    "A",    # flake8-builtins - shadowing builtins
+    "C4",   # flake8-comprehensions
+    "SIM",  # flake8-simplify
+    "PTH",  # flake8-use-pathlib - prefer pathlib over os.path
+    "RUF",  # ruff-specific rules
+]
+
+[tool.ruff.lint.pydocstyle]
+# NumPy-style docstrings.
+convention = "numpy"
+
+[tool.ruff.lint.per-file-ignores]
+# Tests don't need module/function docstrings; test names are self-describing.
+"tests/*" = ["D100", "D103"]
+
+[tool.ty.rules]
+# Make the type check mandatory: treat every ty diagnostic as an error so the
+# check fails on any type problem (ty already exits non-zero on warnings/errors,
+# this promotes warning-level rules to errors too).
+all = "error"

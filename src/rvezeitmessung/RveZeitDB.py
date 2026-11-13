@@ -7,17 +7,18 @@ Created on 18.3.2023.
 
 import sqlite3
 from pathlib import Path
+from typing import Any
 
-from . import RveZeitConfig
+from .RveZeitConfig import Config
 
 
 class DB:
     """Class to handle database calls."""
 
-    __dbConnection = None
-    __dbCursor = None
+    __dbConnection: sqlite3.Connection | None = None
+    __dbCursor: sqlite3.Cursor | None = None
 
-    def __init__(self, config: RveZeitConfig):
+    def __init__(self, config: Config):
         # Existenz feststellen
         sqlite_file = config.get("data.SQLiteFile")
         print(f"Initialize Database {sqlite_file}")
@@ -80,9 +81,9 @@ class DB:
         if self.__dbCursor:
             sql = "SELECT MAX(nummer) FROM meta"
             self.__dbCursor.execute(sql)
-            meta_x = self.__dbCursor.fetchone()[0]
-            if meta_x is None:
-                meta_x = 0
+            result = self.__dbCursor.fetchone()[0]
+            if result is not None:
+                meta_x = int(result)
 
         print(f"MetaX: {meta_x}")
         return meta_x
@@ -93,16 +94,16 @@ class DB:
         if self.__dbCursor:
             sql = "SELECT MAX(nummer) FROM zeiten"
             self.__dbCursor.execute(sql)
-            max_number = self.__dbCursor.fetchone()[0]
-            if max_number is None:
-                max_number = 0
+            result = self.__dbCursor.fetchone()[0]
+            if result is None:
+                max_number = int(result)
 
         return max_number
 
-    def get_data_by_number(self, nummer: str) -> int:
+    def get_data_by_number(self, nummer: int) -> tuple[Any, ...] | None:
         """Get db entry by number."""
         row = None
-        if self.__dbCursor and nummer is not None and nummer != "":
+        if self.__dbCursor:
             sql = f"SELECT * FROM zeiten WHERE nummer = {nummer}"
             self.__dbCursor.execute(sql)
             row = self.__dbCursor.fetchone()
@@ -110,7 +111,7 @@ class DB:
 
     def insert_data_by_number(
         self,
-        number: str,
+        number: int,
         time_string: str,
         hour: int,
         minuten: int,
@@ -120,7 +121,7 @@ class DB:
         backup2: int = 0,
     ):
         """Create new zeiten entry."""
-        if self.__dbCursor and number is not None and number != "":
+        if self.__dbCursor and self.__dbConnection:
             sql = (
                 "INSERT INTO zeiten "
                 + "(nummer, timeString, h, min, sec, secToday, backup1, backup2)"
@@ -133,7 +134,7 @@ class DB:
 
     def update_data_by_number(
         self,
-        nummer: str,
+        nummer: int,
         time_string: str,
         hour: int,
         minuten: int,
@@ -145,7 +146,7 @@ class DB:
         comment: str = "New time for",
     ):
         """Update new zeiten entry."""
-        if self.__dbCursor and nummer is not None and nummer != "":
+        if self.__dbCursor and self.__dbConnection:
             sql = (
                 "UPDATE zeiten SET "
                 + f"timeString = '{time_string}', "
@@ -169,7 +170,7 @@ class DB:
 
     def upsert_data_by_number(
         self,
-        nummer: str,
+        nummer: int,
         time_string: str,
         hour: int,
         minuten: int,
@@ -195,16 +196,16 @@ class DB:
                 old_sec_today=row[1],
             )
 
-    def delete_data_by_number(self, nummer: str):
+    def delete_data_by_number(self, nummer: int):
         """Delete data entry from database."""
-        if self.__dbCursor and nummer is not None and nummer != "":
+        if self.__dbCursor and self.__dbConnection:
             sql1 = f"delete from meta where int = {nummer!s}"
             sql2 = f"delete from zeiten where nummer =  {nummer!s}"
             self.__dbCursor.execute(sql1)
             self.__dbCursor.execute(sql2)
             self.__dbConnection.commit()
 
-    def get_all_data(self) -> list:
+    def get_all_data(self) -> list[Any]:
         """Get all time entries."""
         result = []
         if self.__dbCursor:

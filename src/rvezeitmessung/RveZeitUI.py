@@ -7,6 +7,9 @@ Created on 18.3.2023
 import json
 import tkinter as tk
 from tkinter import ttk
+from typing import Any, override
+
+from .RveZeitConfig import Config
 
 
 class UI:
@@ -16,15 +19,13 @@ class UI:
     This class should not contain any handlers.
     """
 
-    __config = None
     __base_name = "window"
 
-    def __init__(self, config: dict):
+    def __init__(self, config: Config):
         print("Init UI")
-        self.__ui_elements = {}
+        self.__ui_elements: dict[str, Any] = {}
         self.__config = config
-        if self.__config is not None:
-            self.__create_window()
+        self.__create_window()
 
     def __create_window(self):
         self.__ui_elements[self.__base_name] = window = tk.Tk()
@@ -51,7 +52,7 @@ class UI:
         if val:
             self.__add_menu("window", val)
 
-    def __add_menu(self, base: str, element: dict):
+    def __add_menu(self, base: str, element: dict[str, Any]):
         """Add the main menu to the window.
 
         Calls creation of all subsequent elements in the menu tree.
@@ -70,7 +71,7 @@ class UI:
                     for sub_element in element["elements"]:
                         self.__add_menu_element(element_name, sub_element)
 
-    def __add_menu_element(self, base: str, element: dict):
+    def __add_menu_element(self, base: str, element: dict[str, Any]):
         """Add a menu element."""
         # print(f"* Add menu element to {base}. Element: {element}")
         if base and base in self.__ui_elements and element:
@@ -95,7 +96,9 @@ class UI:
                     for sub_element in element["elements"]:
                         self.__add_menu_element(element_name, sub_element)
 
-    def __add_sub_menu(self, parent, name: str, properties: dict | None = None, menu_properties: dict | None = None):
+    def __add_sub_menu(
+        self, parent, name: str, properties: dict[str, Any] | None = None, menu_properties: dict[str, Any] | None = None
+    ):
         """Add a sub menu."""
         # print(f"** Add new Sub Menue {name}")
         if properties is None:
@@ -105,7 +108,7 @@ class UI:
         self.__ui_elements[name] = tk.Menu(parent, **menu_properties)
         parent.add_cascade(menu=self.__ui_elements[name], **properties)
 
-    def __add_ui_element(self, base: str, element: dict):
+    def __add_ui_element(self, base: str, element: dict[str, Any]):
         # print(f"Add to {base} new UI Element: {element}")
         if base and base in self.__ui_elements and element:
             parent = self.__ui_elements[base]
@@ -144,7 +147,12 @@ class UI:
                         self.__add_ui_element(element_name, sub_element)
 
     def __add_label(
-        self, parent, name: str, properties: dict | None = None, placement: dict | None = None, pack: dict | None = None
+        self,
+        parent,
+        name: str,
+        properties: dict[str, Any] | None = None,
+        placement: dict[str, Any] | None = None,
+        pack: dict[str, Any] | None = None,
     ):
         """Add a label."""
         # print(f"Add new label {name}")
@@ -164,10 +172,10 @@ class UI:
         self,
         parent,
         name: str,
-        properties: dict | None = None,
-        placement: dict | None = None,
-        pack: dict | None = None,
-        validation: dict | None = None,
+        properties: dict[str, Any] | None = None,
+        placement: dict[str, Any] | None = None,
+        pack: dict[str, Any] | None = None,
+        validation: dict[str, Any] | None = None,
     ):
         """Add an entry."""
         # print(f"Add new entry {name}")
@@ -204,7 +212,12 @@ class UI:
                     )
 
     def __add_button(
-        self, parent, name: str, properties: dict | None = None, placement: dict | None = None, pack: dict | None = None
+        self,
+        parent,
+        name: str,
+        properties: dict[str, Any] | None = None,
+        placement: dict[str, Any] | None = None,
+        pack: dict[str, Any] | None = None,
     ):
         """Add a button."""
         # print(f"Add new button {name}")
@@ -221,7 +234,12 @@ class UI:
             self.__ui_elements[name].pack(cnf=pack)
 
     def __add_radio_button(
-        self, parent, name: str, properties: dict | None = None, placement: dict | None = None, pack: dict | None = None
+        self,
+        parent,
+        name: str,
+        properties: dict[str, Any] | None = None,
+        placement: dict[str, Any] | None = None,
+        pack: dict[str, Any] | None = None,
     ):
         """Add a radio button."""
         # print(f"Add new button {name}")
@@ -238,7 +256,12 @@ class UI:
             self.__ui_elements[name].pack(cnf=pack)
 
     def __add_frame(
-        self, parent, name: str, properties: dict | None = None, placement: dict | None = None, pack: dict | None = None
+        self,
+        parent,
+        name: str,
+        properties: dict[str, Any] | None = None,
+        placement: dict[str, Any] | None = None,
+        pack: dict[str, Any] | None = None,
     ):
         """Add a frame."""
         # print(f"Add new frame {name}")
@@ -255,7 +278,12 @@ class UI:
             self.__ui_elements[name].pack(cnf=pack)
 
     def __add_scrollbar(
-        self, parent, name: str, properties: dict | None = None, placement: dict | None = None, pack: dict | None = None
+        self,
+        parent,
+        name: str,
+        properties: dict[str, Any] | None = None,
+        placement: dict[str, Any] | None = None,
+        pack: dict[str, Any] | None = None,
     ):
         """Add a scrollbar."""
         # print(f"Add new scrollbar {name}")
@@ -272,7 +300,12 @@ class UI:
             self.__ui_elements[name].pack(cnf=pack)
 
     def __add_listbox(
-        self, parent, name: str, properties: dict | None = None, placement: dict | None = None, pack: dict | None = None
+        self,
+        parent,
+        name: str,
+        properties: dict[str, Any] | None = None,
+        placement: dict[str, Any] | None = None,
+        pack: dict[str, Any] | None = None,
     ):
         """Add a listbox."""
         # print(f"Add new listbox {name}")
@@ -347,7 +380,7 @@ class UI:
         if self.__base_name in self.__ui_elements and self.__ui_elements[self.__base_name] is not None:
             self.__ui_elements[self.__base_name].destroy()
 
-    def insert(self, name: str, index: int, value: str):
+    def insert(self, name: str, index: int | str, value: str):
         """Füge einen Wert an der angegebenen Position in das benannte Widget ein."""
         # print(f"Insert into {name} at {index}: {value}")
         if name in self.__ui_elements:
@@ -366,11 +399,11 @@ class UI:
             self.clear(name)
             self.insert(name, 0, value)
 
-    def get_value(self, name: str) -> str:
+    def get_value(self, name: str) -> str | None:
         """Gib den aktuellen Wert des benannten Widgets zurück."""
         # print(f"Get value from {name}")
         if name in self.__ui_elements:
-            return self.__ui_elements[name].get()
+            return str(self.__ui_elements[name].get())
         return None
 
     def bind(self, name: str, sequence: str, func):
@@ -379,7 +412,7 @@ class UI:
         if name in self.__ui_elements:
             self.__ui_elements[name].bind(sequence, func)
 
-    def curselection(self, name: str) -> str:
+    def curselection(self, name: str) -> Any:
         """Gib den aktuell ausgewählten Eintrag des benannten Widgets zurück."""
         # print(f"Curselection for {name}")
         line_text = None
@@ -387,6 +420,7 @@ class UI:
             line_text = self.__ui_elements[name].get("anchor")
         return line_text
 
+    @override
     def __str__(self):
         """Return a JSON representation of all registered UI elements."""
         result = []

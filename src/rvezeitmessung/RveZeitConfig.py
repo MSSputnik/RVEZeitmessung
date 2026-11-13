@@ -9,7 +9,7 @@ import configparser
 import json
 import tkinter as tk
 from pathlib import Path
-from typing import Any, ClassVar
+from typing import Any, ClassVar, override
 
 AppVersion = "20261113-1541"
 
@@ -21,8 +21,6 @@ class Config:
     The GUI layout can be retrieved by `get_ui()`.
     """
 
-    __config_data: ClassVar[dict] = {}
-    __ui_design: ClassVar[dict] = {}
     __config_file_name = "RVEZeit.ini"
     __default_position = "Test"
 
@@ -39,7 +37,7 @@ class Config:
     #     "max": "only for int or float. maximum allowed value. if value > maximum -> value = maximum",
     #   }
     # }
-    __config_variables: ClassVar[dict] = {
+    __config_variables: ClassVar[dict[str, Any]] = {
         "data": {
             "Position": {"ini": "DEFAULT.Position", "default": __default_position},
             "AutoIncrement": {"ini": "DEFAULT.AutoIncrement", "default": False, "type": "boolean"},
@@ -56,7 +54,7 @@ class Config:
     def __init__(self):
         """Load configuration from various sources."""
         # -- Applikationskonfiguration
-        self.__config_data = {}
+        self.__config_data: dict[str, dict[str, Any]] = {}
         self.__config_data["app"] = {}
         self.__config_data["app"]["version"] = AppVersion
         self.__config_data["app"]["logo"] = "RVE-Logo.gif"
@@ -80,6 +78,7 @@ class Config:
         # exit(0)
 
         # -- GUI Elemente
+        self.__ui_design: dict[str, Any] = {}
         self.__ui_design["title"] = self.get("app.title")
         self.__ui_design["geometry"] = "800x600"
         self.__ui_design["resizable"] = {"width": False, "height": False}
@@ -214,7 +213,8 @@ class Config:
                 ],
             }
         )
-        keys = ["s", "d", "f"]
+        keys_save = ["s", "d", "f"]
+        keys_check = ["x", "c", "v"]
         offset = 0
         for number in range(0, self.get("data.InputGroups")):
             if number > 0:
@@ -253,7 +253,7 @@ class Config:
                     "name": f"btnCheck{number + 1}",
                     "type": "button",
                     "description": f"button check for text entry {number + 1}",
-                    "properties": {"text": "Check"},
+                    "properties": {"text": f"Check ({keys_check[number]})"},
                     "placement": {"x": 130 + 210 * number, "y": 35, "width": 90, "height": 30},
                 }
             )
@@ -262,7 +262,7 @@ class Config:
                     "name": f"btnCommit{number + 1}",
                     "type": "button",
                     "description": f"button commit for text entry {number + 1}",
-                    "properties": {"text": f"Zeitnahme ({keys[number]})"},
+                    "properties": {"text": f"Zeitnahme ({keys_save[number]})"},
                     "placement": {"x": 130 + 210 * number, "y": 65, "width": 90, "height": 30},
                 }
             )
@@ -405,6 +405,7 @@ class Config:
             }
         )
 
+    @override
     def __str__(self) -> str:
         """Return the configuration as a JSON formatted string."""
         return json.dumps(self.__config_data, indent=2)
@@ -414,13 +415,11 @@ class Config:
 
         Separate level with `.`. e.g. Application Version: app.version
         """
-        config_data = None
-        if prop is not None:
-            key_list = prop.split(".")
-            config_data = self.__config_data
-            for key in key_list:
+        key_list = prop.split(".")
+        config_data = self.__config_data
+        for key in key_list:
+            if config_data is not None:
                 config_data = config_data.get(key, None)
-
         return config_data
 
     def get_ui(self, prop: str, default: Any | None = None) -> Any:
@@ -428,11 +427,10 @@ class Config:
 
         Separate level with `.`.
         """
-        ui_data = None
-        if prop is not None:
-            key_list = prop.split(".")
-            ui_data = self.__ui_design
-            for key in key_list:
+        key_list = prop.split(".")
+        ui_data = self.__ui_design
+        for key in key_list:
+            if ui_data is not None:
                 ui_data = ui_data.get(key, None)
         return ui_data
 
@@ -561,7 +559,7 @@ class Config:
                                 config.read(self.__config_file_name)
                                 config.set(ini_array[0], ini_array[1], str(value))
                                 with Path(self.__config_file_name).open("w") as fp:
-                                    config.write(fp, self.__config_file_name)
+                                    config.write(fp)
                             else:
                                 print(
                                     "ERROR: configVariables definition error. "

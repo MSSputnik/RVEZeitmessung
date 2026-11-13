@@ -10,26 +10,24 @@ import time
 import tkinter as tk
 from pathlib import Path
 from tkinter import messagebox, ttk
-from typing import ClassVar
 
-from . import RveZeitConfig, RveZeitDB, RveZeitFtp, RveZeitUI
+from .RveZeitConfig import Config
+from .RveZeitDB import DB
+from .RveZeitFtp import FTP
+from .RveZeitUI import UI
 
 
 class App:
     """Contain the actual application code."""
 
-    __config: RveZeitConfig = None
-    __ui: RveZeitUI = None
-    __changeNr = None
-    __transport = None
-    __styles: ClassVar[dict] = {}
-
-    def __init__(self, config: RveZeitConfig, ui: RveZeitUI, db: RveZeitDB, transport: RveZeitFtp):
+    def __init__(self, config: Config, ui: UI, db: DB, transport: FTP):
         """Initialize the application, wiring up UI, database and transport."""
-        self.__config = config
-        self.__ui = ui
-        self.__db = db
-        self.__transport = transport
+        self.__config: Config = config
+        self.__ui: UI = ui
+        self.__db: DB = db
+        self.__transport: FTP = transport
+        self.__changeNr = None
+        self.__styles: dict[str, str] = {}
 
         max_number = db.get_max_number()
 
@@ -84,6 +82,9 @@ class App:
         ui.bind("window", "s", lambda event: self.zeit_of1())
         ui.bind("window", "d", lambda event: self.zeit_of2())
         ui.bind("window", "f", lambda event: self.zeit_of3())
+        ui.bind("window", "x", lambda event: self.check_1())
+        ui.bind("window", "c", lambda event: self.check_2())
+        ui.bind("window", "v", lambda event: self.check_3())
         ui.bind("window.text1", "<Return>", lambda event: self.zeit_of1())
         ui.bind("window.text2", "<Return>", lambda event: self.zeit_of2())
         ui.bind("window.text3", "<Return>", lambda event: self.zeit_of3())
@@ -142,15 +143,19 @@ class App:
         self.__check_number(3)
 
     def __check_number(self, number: int):
-        nostr = self.__ui.get_value(f"window.text{number}")
-        if len(nostr) > 0:
-            row = self.__db.get_data_by_number(nostr)
-            if row is None:
-                self.__ui.config(f"window.btnCommit{number}", style=self.__styles["greenButton"])
-                self.__ui.config(f"window.text{number}", style=self.__styles["greenEntry"])
-            else:
-                self.__ui.config(f"window.btnCommit{number}", style=self.__styles["redButton"])
-                self.__ui.config(f"window.text{number}", style=self.__styles["redEntry"])
+        no_str = self.__ui.get_value(f"window.text{number}")
+        try:
+            value = int(no_str) if no_str is not None else 0
+        except (TypeError, ValueError):
+            value = 0
+
+        row = self.__db.get_data_by_number(value)
+        if row is None:
+            self.__ui.config(f"window.btnCommit{number}", style=self.__styles["greenButton"])
+            self.__ui.config(f"window.text{number}", style=self.__styles["greenEntry"])
+        else:
+            self.__ui.config(f"window.btnCommit{number}", style=self.__styles["redButton"])
+            self.__ui.config(f"window.text{number}", style=self.__styles["redEntry"])
 
     # ========================================================================
     def number_up(self):
@@ -163,13 +168,13 @@ class App:
 
     def __change_number(self, delta: int):
         """Ändere die Startnummer im ersten Eingabefeld um den angegebenen Wert."""
-        value = self.__ui.get_value("window.text1")
+        no_str = self.__ui.get_value("window.text1")
         try:
-            number = int(value)
+            value = int(no_str) if no_str is not None else 0
         except (TypeError, ValueError):
-            number = 0
-        number = max(0, number + delta)
-        self.__ui.replace("window.text1", str(number))
+            value = 0
+        value = max(0, value + delta)
+        self.__ui.replace("window.text1", str(value))
 
     # ============================================================================================
     def zeit_of1(self):
@@ -189,14 +194,19 @@ class App:
         jetzt = time.localtime()
         time_string = str(jetzt.tm_hour).zfill(2) + ":" + str(jetzt.tm_min).zfill(2) + ":" + str(jetzt.tm_sec).zfill(2)
         seconds_today = 3600 * jetzt.tm_hour + 60 * jetzt.tm_min + jetzt.tm_sec
-        nostr = self.__ui.get_value(f"window.text{number}")
-        if nostr is not None and len(nostr) > 0:
+        no_str = self.__ui.get_value(f"window.text{number}")
+        try:
+            value = int(no_str) if no_str is not None else 0
+        except (TypeError, ValueError):
+            value = 0
+
+        if value > 0:
             self.__db.upsert_data_by_number(
-                nostr, time_string, jetzt.tm_hour, jetzt.tm_min, jetzt.tm_sec, seconds_today
+                value, time_string, jetzt.tm_hour, jetzt.tm_min, jetzt.tm_sec, seconds_today
             )
 
             if self.__config.get("data.AutoIncrement"):
-                self.__ui.replace(f"window.text{number}", str(int(nostr) + 1))
+                self.__ui.replace(f"window.text{number}", str(value + 1))
             else:
                 self.__ui.clear(f"window.text{number}")
 
@@ -233,7 +243,7 @@ class App:
             trz_text = f"Change #{self.__changeNr}"
             self.__ui.config("window.lblChangeText", text=trz_text)
             row = self.__db.get_data_by_number(self.__changeNr)
-            if row:
+            if row is not None:
                 self.__ui.replace("window.editH", str(row[2]).zfill(2))
                 self.__ui.replace("window.editM", str(row[3]).zfill(2))
                 self.__ui.replace("window.editS", str(row[4]).zfill(2))
@@ -242,14 +252,28 @@ class App:
                     old_hour = math.floor(row[6] / 3600)
                     old_minutes = math.floor((row[6] - 3600 * old_hour) / 60)
                     old_seconds = row[6] - 3600 * old_hour - 60 * old_minutes
-                    old_data = old_data + " (" + str(old_hour).zfill(2) + ":" + str(old_minutes).zfill(2)
-                    +":" + str(old_seconds).zfill(2)
+                    old_data = (
+                        old_data
+                        + " ("
+                        + str(old_hour).zfill(2)
+                        + ":"
+                        + str(old_minutes).zfill(2)
+                        + ":"
+                        + str(old_seconds).zfill(2)
+                    )
                     if row[7] > 0:
                         old_hour = math.floor(row[7] / 3600)
                         old_minutes = math.floor((row[7] - 3600 * old_hour) / 60)
                         old_seconds = row[7] - 3600 * old_hour - 60 * old_minutes
-                        old_data = old_data + " und " + str(old_hour).zfill(2) + ":" + str(old_minutes).zfill(2)
-                        +":" + str(old_seconds).zfill(2)
+                        old_data = (
+                            old_data
+                            + " und "
+                            + str(old_hour).zfill(2)
+                            + ":"
+                            + str(old_minutes).zfill(2)
+                            + ":"
+                            + str(old_seconds).zfill(2)
+                        )
                     old_data = old_data + ")"
                 else:
                     old_data = old_data + " <=  alte Zeit"
@@ -260,22 +284,22 @@ class App:
         """Update the changed time entry in the database."""
         if self.__changeNr is not None:
             row = self.__db.get_data_by_number(self.__changeNr)
-            if row:
+            if row is not None:
                 print(f"Change row: {row}")
                 backup0 = row[5]
                 backup1 = row[6]
                 # backup2 = row[7]
                 #
                 try:
-                    new_hour = int(self.__ui.get_value("window.editH"))
+                    new_hour = int(self.__ui.get_value("window.editH") or "0")
                 except Exception:
                     new_hour = 0
                 try:
-                    new_minutes = int(self.__ui.get_value("window.editM"))
+                    new_minutes = int(self.__ui.get_value("window.editM") or "0")
                 except Exception:
                     new_minutes = 0
                 try:
-                    new_seconds = int(self.__ui.get_value("window.editS"))
+                    new_seconds = int(self.__ui.get_value("window.editS") or "0")
                 except Exception:
                     new_seconds = 0
                 time_string = str(new_hour).zfill(2) + ":" + str(new_minutes).zfill(2) + ":" + str(new_seconds).zfill(2)

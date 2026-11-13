@@ -24,6 +24,11 @@ dependencies are used.
   - Organize imports: `uv run ruff check --select I --fix .`
   - Format: `uv run ruff format .`
 
+## Running ty
+
+- Run ty with `uv run ty`, never with a bare `ty`.
+  - Lint: `uv run ty check .`
+
 ## Writing Markdown
 
 - Write Markdown tables in the compact (non-padded) GitHub Flavored Markdown

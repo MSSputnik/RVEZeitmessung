@@ -9,7 +9,7 @@ Created on 18.3.2023.
 import ftplib
 from pathlib import Path
 
-from . import RveZeitConfig
+from .RveZeitConfig import Config
 
 
 class FTP:
@@ -17,10 +17,10 @@ class FTP:
 
     __config = None
 
-    def __init__(self, config: RveZeitConfig):
+    def __init__(self, config: Config):
         self.__config = config
 
-    def send_file(self, files: list) -> bool:
+    def send_file(self, files: list[str]) -> bool:
         """Send given files via FTP."""
         print(f"Send {files} via FTP")
         result = False
